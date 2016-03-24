@@ -1,0 +1,4249 @@
+----------------------------------------
+FILE : 'commands.c'
+<<<
+  $Header: /dorks/tdo/cvsroot/gsserv-5.1/src/commands.c,v 1.1.1.1.2.18.2.2 1998/08/06 06:23:30 tdo Exp $
+
+  COMMANDS.C
+
+  this file deals with the interaction between gsserv
+  and the users via the PRIVMSG.
+>>>
+References Function c_add : commands.c
+References Function c_addex : commands.c
+References Function c_ban : commands.c
+References Function c_bankick : commands.c
+References Function c_bitchslap : commands.c
+References Function c_deop : commands.c
+References Function c_destroy : commands.c
+References Function c_dream : commands.c
+References Function c_goto : commands.c
+References Function c_haywood : commands.c
+References Function c_help : commands.c
+References Function c_info : commands.c
+References Function c_invade : commands.c
+References Function c_invadem : commands.c
+References Function c_invadet : commands.c
+References Function c_jimmy : commands.c
+References Function c_join : commands.c
+References Function c_kick : commands.c
+References Function c_ldestroy : commands.c
+References Function c_level : commands.c
+References Function c_list : commands.c
+References Function c_me : commands.c
+References Function c_mode : commands.c
+References Function c_msg : commands.c
+References Function c_natemode : commands.c
+References Function c_nick : commands.c
+References Function c_op : commands.c
+References Function c_opall : commands.c
+References Function c_quote : commands.c
+References Function c_reload : commands.c
+References Function c_remove : commands.c
+References Function c_say : commands.c
+References Function c_sex : commands.c
+References Function c_shutdown : commands.c
+References Function c_status : commands.c
+References Function c_topic : commands.c
+References Function c_werd : commands.c
+References Function c_writefile : commands.c
+References Function c_wzo : commands.c
+
+INCLUDES : 'gsserv.h' [Local file]
+
+INCLUDES : 'funcs.h' [Local file]
+
+INCLUDES : 'config.h' [Local file]
+
+INCLUDES : 'commands.h' [Local file]
+
+INCLUDES : 'modules.h' [Local file]
+   INCLUDES : 'dlfcn.h' [System file]
+   INCLUDES : 'mods-common.h' [Local file]
+
+INCLUDES : 'stdlib.h' [System file]
+
+INCLUDES : 'string.h' [System file]
+
+INCLUDES : 'sys/utsname.h' [System file]
+
+DEFINES : 'INC_COMMAND_C' 
+<<<
+ So headers know what file is including them 
+>>>
+
+VARIABLE : mynick [External from header file]
+<<<
+ The pushback stack???   GSServ's nick 
+>>>
+Type: char mynick[10]
+
+VARIABLE : mychan [External from header file]
+<<<
+ The channel it will join 
+>>>
+Type: char mychan[50]
+
+VARIABLE : ssock [External from header file]
+<<<
+ The socket descriptor 
+>>>
+Type: int ssock
+
+VARIABLE : getpush [External from header file]
+<<<
+ ??? 
+>>>
+Type: int getpush
+
+VARIABLE : quitflag [External from header file]
+<<<
+ Should GSServ quit 
+>>>
+Type: int quitflag
+
+VARIABLE : NATEMODE [External from header file]
+<<<
+ NATEMODE flag 
+>>>
+Type: int NATEMODE
+
+VARIABLE : starttime [External from header file]
+<<<
+ The time GSServ was started up 
+>>>
+Type: long starttime
+
+VARIABLE : signame [External from header file]
+<<<
+ The quit messages for the different signals 
+>>>
+Type: char* signame[]
+
+VARIABLE : DEFAULTNICK [External from header file]
+<<<
+ are we including from config.c?   GSServ's nick 
+>>>
+Type: char DEFAULTNICK[10]
+
+VARIABLE : LOGINNAME [External from header file]
+<<<
+ GSServ's username 
+>>>
+Type: char LOGINNAME[9]
+
+VARIABLE : IRCUSER [External from header file]
+<<<
+ Gecos stuff 
+>>>
+Type: char IRCUSER[1024]
+
+VARIABLE : VERSION [External from header file]
+<<<
+ version string 
+>>>
+Type: char VERSION[1024]
+
+VARIABLE : DEFAULTSERVER [External from header file]
+<<<
+ server to connect to 
+>>>
+Type: char DEFAULTSERVER[1024]
+
+VARIABLE : HOMECHAN [External from header file]
+<<<
+ The channel to connect to 
+>>>
+Type: char HOMECHAN[1024]
+
+VARIABLE : USERFILE [External from header file]
+<<<
+ where's the user file 
+>>>
+Type: char USERFILE[1024]
+
+VARIABLE : HELPDIR [External from header file]
+<<<
+ where's the help dir 
+>>>
+Type: char HELPDIR[1024]
+
+VARIABLE : DEFAULTDIR [External from header file]
+<<<
+ the default directory to look in for help and userfile
+>>>
+Type: char DEFAULTDIR[1024]
+
+VARIABLE : DEFAULTPORT [External from header file]
+<<<
+ the default port to connect to on the server 
+>>>
+Type: int DEFAULTPORT
+
+VARIABLE : flood_ctl [External from header file]
+<<<
+ flood control 
+>>>
+Type: int flood_ctl
+
+VARIABLE : DIRTYUFILE [External from header file]
+<<<
+ For adding new users at run time 
+>>>
+Type: int DIRTYUFILE
+
+VARIABLE : jablowme [Global]
+<<<
+ The Haywood sayings 
+>>>
+Type: char* jablowme[]
+Included from: commands.h
+Visible in commands.c
+Visible in commands.h
+Used in c_haywood : commands.c
+
+VARIABLE : OnJoin [Global]
+<<<
+ Add's a hook to the given event   Remove's a hook   Add's a command   Remove's a command 
+>>>
+Type: EventList* OnJoin
+Included from: modules.h
+Visible in commands.c
+Visible in config.c
+Visible in gsserv.c
+Visible in irc.c
+Visible in modules.c
+Visible in modules.h
+Used in AddHook : modules.c
+Used in RemoveHook : modules.c
+
+VARIABLE : OnLeave [Global]
+Type: EventList* OnLeave
+Included from: modules.h
+Visible in commands.c
+Visible in config.c
+Visible in gsserv.c
+Visible in irc.c
+Visible in modules.c
+Visible in modules.h
+Used in AddHook : modules.c
+Used in RemoveHook : modules.c
+
+VARIABLE : OnQuit [Global]
+Type: EventList* OnQuit
+Included from: modules.h
+Visible in commands.c
+Visible in config.c
+Visible in gsserv.c
+Visible in irc.c
+Visible in modules.c
+Visible in modules.h
+Used in AddHook : modules.c
+Used in RemoveHook : modules.c
+
+VARIABLE : OnKick [Global]
+Type: EventList* OnKick
+Included from: modules.h
+Visible in commands.c
+Visible in config.c
+Visible in gsserv.c
+Visible in irc.c
+Visible in modules.c
+Visible in modules.h
+Used in AddHook : modules.c
+Used in RemoveHook : modules.c
+
+VARIABLE : OnSay [Global]
+Type: EventList* OnSay
+Included from: modules.h
+Visible in commands.c
+Visible in config.c
+Visible in gsserv.c
+Visible in irc.c
+Visible in modules.c
+Visible in modules.h
+Used in AddHook : modules.c
+Used in RemoveHook : modules.c
+Used in gotprivmsg : irc.c
+
+VARIABLE : OnMe [Global]
+Type: EventList* OnMe
+Included from: modules.h
+Visible in commands.c
+Visible in config.c
+Visible in gsserv.c
+Visible in irc.c
+Visible in modules.c
+Visible in modules.h
+Used in AddHook : modules.c
+Used in RemoveHook : modules.c
+
+VARIABLE : OnNotice [Global]
+Type: EventList* OnNotice
+Included from: modules.h
+Visible in commands.c
+Visible in config.c
+Visible in gsserv.c
+Visible in irc.c
+Visible in modules.c
+Visible in modules.h
+Used in AddHook : modules.c
+Used in RemoveHook : modules.c
+
+VARIABLE : OnCNotice [Global]
+Type: EventList* OnCNotice
+Included from: modules.h
+Visible in commands.c
+Visible in config.c
+Visible in gsserv.c
+Visible in irc.c
+Visible in modules.c
+Visible in modules.h
+Used in AddHook : modules.c
+Used in RemoveHook : modules.c
+
+VARIABLE : OnMode [Global]
+Type: EventList* OnMode
+Included from: modules.h
+Visible in commands.c
+Visible in config.c
+Visible in gsserv.c
+Visible in irc.c
+Visible in modules.c
+Visible in modules.h
+Used in AddHook : modules.c
+Used in RemoveHook : modules.c
+
+VARIABLE : OnTopic [Global]
+Type: EventList* OnTopic
+Included from: modules.h
+Visible in commands.c
+Visible in config.c
+Visible in gsserv.c
+Visible in irc.c
+Visible in modules.c
+Visible in modules.h
+Used in AddHook : modules.c
+Used in RemoveHook : modules.c
+
+VARIABLE : Commands [Global]
+Type: CmdList* Commands
+Included from: modules.h
+Visible in commands.c
+Visible in config.c
+Visible in gsserv.c
+Visible in irc.c
+Visible in modules.c
+Visible in modules.h
+Used in AddCommand : modules.c
+Used in RemoveCommand : modules.c
+Used in do_command : commands.c
+
+VARIABLE : genstr [External]
+<<<
+ A Gender string 
+>>>
+Type: char* genstr[]
+Declared global in 'gsserv.c'
+
+VARIABLE : head [External]
+<<<
+ The head of the userlist 
+>>>
+Type: LIST* head
+Declared global in 'userlist.c'
+
+VARIABLE : tail [External]
+<<<
+ The tail of the user list 
+>>>
+Type: LIST* tail
+
+VARIABLE : cmdlist [Global]
+<<<
+ The different commands that are availible   writes the user file 
+>>>
+Type: COMMAND cmdlist[]
+Visible in commands.c
+Used in c_help : commands.c
+Used in do_command : commands.c
+
+FUNCTION : c_add [Global]
+<<<
+  add a user to the userlist
+>>>
+Prototyped in funcs.h
+Type: void c_add
+Arguments: char fromnick[] <<<-- who's it from>>>
+Arguments: int level <<<-- what's their level>>>
+Arguments: char arg[] <<<-- any arguments>>>
+Arguments: int gend <<<-- M/F/N/O>>>
+Calls c_addex : commands.c
+Calls checkonchannel : irc.c
+Calls getuserhost : irc.c
+Calls notice : irc.c
+Calls sprintf
+Calls sscanf
+Calls strlen
+Calls to_lower : gsserv.c
+Used in commands.c
+
+FUNCTION : c_addex [Global]
+<<<
+  add a user to the userlist (Using extended notation)
+>>>
+Prototyped in funcs.h
+Type: void c_addex
+Arguments: char fromnick[] <<<-- who's it from>>>
+Arguments: int level <<<-- what's their level>>>
+Arguments: char arg[] <<<-- any arguments>>>
+Arguments: int gend <<<-- M/F/N/O>>>
+Calls addentry : userlist.c
+Calls notice : irc.c
+Calls sprintf
+Calls sscanf
+Called from c_add : commands.c
+Used in commands.c
+
+FUNCTION : c_ban [Global]
+<<<
+  bans someone
+>>>
+Prototyped in funcs.h
+Type: void c_ban
+Arguments: char fromnick[] <<<-- who's it from>>>
+Arguments: int level <<<-- what's their leve>>>
+Arguments: char arg[] <<<-- any arguments>>>
+Arguments: int gend <<<-- M/F/N/O>>>
+Calls ban : irc.c
+Calls checkonchannel : irc.c
+Calls notice : irc.c
+Calls sprintf
+Calls strcasecmp
+Used in commands.c
+References Variable mychan : gsserv.c
+References Variable mynick : gsserv.c
+
+FUNCTION : c_bankick [Global]
+<<<
+  bankicks someone
+>>>
+Prototyped in funcs.h
+Type: void c_bankick
+Arguments: char fromnick[] <<<-- who's it from>>>
+Arguments: int level <<<-- what's their level>>>
+Arguments: char arg[] <<<-- any arguments>>>
+Arguments: int gend <<<-- M/F/N/O>>>
+Calls ban : irc.c
+Calls checkonchannel : irc.c
+Calls kick : irc.c
+Calls notice : irc.c
+Calls sprintf
+Calls strcasecmp
+Used in commands.c
+References Variable mychan : gsserv.c
+References Variable mynick : gsserv.c
+
+FUNCTION : c_bitchslap [Global]
+<<<
+  bitchslap some honky
+>>>
+Prototyped in funcs.h
+Type: void c_bitchslap
+Arguments: char fromnick[] <<<-- who's it from>>>
+Arguments: int level <<<-- what's their level>>>
+Arguments: char arg[] <<<-- any arguments>>>
+Arguments: int gend <<<-- M/F/N/O>>>
+Calls checkonchannel : irc.c
+Calls kick : irc.c
+Calls notice : irc.c
+Calls sprintf
+Calls strcasecmp
+Calls writeline : irc.c
+Used in commands.c
+References Variable mychan : gsserv.c
+References Variable mynick : gsserv.c
+
+FUNCTION : c_deop [Global]
+<<<
+  user-requested deop
+>>>
+Prototyped in funcs.h
+Type: void c_deop
+Arguments: char fromnick[] <<<-- who's it from>>>
+Arguments: int level <<<-- what's their level>>>
+Arguments: char arg[] <<<-- any arguments>>>
+Arguments: int gend <<<-- M/F/N/O>>>
+Calls checkonchannel : irc.c
+Calls mode : irc.c
+Calls notice : irc.c
+Calls sprintf
+Calls strcasecmp
+Used in commands.c
+References Variable mychan : gsserv.c
+References Variable mynick : gsserv.c
+
+FUNCTION : c_destroy [Global]
+<<<
+  mega-destructo mode!
+>>>
+Prototyped in funcs.h
+Type: void c_destroy
+Arguments: char fromnick[] <<<-- who's it from>>>
+Arguments: int level <<<-- what's their level>>>
+Arguments: char arg[] <<<-- any arguments>>>
+Arguments: int gend <<<-- M/F/N/O>>>
+Calls ban : irc.c
+Calls checkonchannel : irc.c
+Calls kick : irc.c
+Calls notice : irc.c
+Calls sprintf
+Calls strcasecmp
+Calls writeline : irc.c
+Used in commands.c
+References Variable mychan : gsserv.c
+References Variable mynick : gsserv.c
+
+FUNCTION : c_dream [Global]
+<<<
+  young snatch
+>>>
+Prototyped in funcs.h
+Type: void c_dream
+Arguments: char fromnick[] <<<-- who's it from>>>
+Arguments: int level <<<-- what's their level>>>
+Arguments: char arg[] <<<-- any arguments>>>
+Arguments: int gend <<<-- M/F/N/O>>>
+Calls sprintf
+Calls writeline : irc.c
+Used in commands.c
+References Variable mychan : gsserv.c
+
+FUNCTION : c_goto [Global]
+<<<
+  join another channel
+>>>
+Prototyped in funcs.h
+Type: void c_goto
+Arguments: char fromnick[] <<<-- who's it from>>>
+Arguments: int level <<<-- what's their level>>>
+Arguments: char arg[] <<<any arguments>>>
+Arguments: int gend <<<-- M/F/N/O>>>
+Calls join : irc.c
+Calls notice : irc.c
+Used in commands.c
+
+FUNCTION : c_haywood [Global]
+<<<
+  coid c_haywood -- me and your .o files bang for hours
+>>>
+Prototyped in funcs.h
+Type: void c_haywood
+Arguments: char fromnick[] <<<-- who's it from>>>
+Arguments: int level <<<-- what's their level>>>
+Arguments: char arg[] <<<-- any arguments>>>
+Arguments: int gend <<<-- M/F/N/O>>>
+Calls random
+Calls sprintf
+Calls writeline : irc.c
+Used in commands.c
+References Variable jablowme : commands.c
+References Variable mychan : gsserv.c
+
+FUNCTION : c_help [Global]
+<<<
+  user asked for help
+>>>
+Prototyped in funcs.h
+Type: void c_help
+Arguments: char fromnick[] <<<-- who's it from>>>
+Arguments: int level <<<-- what's their level>>>
+Arguments: char arg[] <<<-- arguments>>>
+Arguments: int gend <<<-- M/F/N/O>>>
+Calls notice : irc.c
+Calls printhelp : help.c
+Calls sprintf
+Calls strcasecmp
+Used in commands.c
+References Variable cmdlist : commands.c
+References Variable mynick : gsserv.c
+
+FUNCTION : c_info [Global]
+<<<
+  user asked for gsserv info
+>>>
+Prototyped in funcs.h
+Type: void c_info
+Arguments: char fromnick[] <<<-- who's it from>>>
+Arguments: int level <<<-- what's their level>>>
+Arguments: char arg[] <<<-- arguments>>>
+Arguments: int gend <<<-- M/F/N/O>>>
+Calls ctime
+Calls notice : irc.c
+Calls sprintf
+Calls uname
+Used in commands.c
+References Variable starttime : gsserv.c
+
+FUNCTION : c_invade [Global]
+<<<
+  RECTAL "4D": INVASION.
+>>>
+Prototyped in funcs.h
+Type: void c_invade
+Arguments: char fromnick[] <<<-- who's it from>>>
+Arguments: int level <<<-- what's their level>>>
+Arguments: char arg[] <<<-- any arguments>>>
+Arguments: int gend <<<-- M/F/N/O>>>
+Calls notice : irc.c
+Calls sprintf
+Calls toupper
+Calls writeline : irc.c
+Used in commands.c
+References Variable mychan : gsserv.c
+
+FUNCTION : c_invadem [Global]
+<<<
+  man can that yoshi choke it down
+>>>
+Prototyped in funcs.h
+Type: void c_invadem
+Arguments: char fromnick[] <<<-- who's it from>>>
+Arguments: int level <<<-- what's their level>>>
+Arguments: char arg[] <<<-- any arguments>>>
+Arguments: int gend <<<-- M/F/N/O>>>
+Calls notice : irc.c
+Calls sprintf
+Calls toupper
+Calls writeline : irc.c
+Used in commands.c
+References Variable mychan : gsserv.c
+
+FUNCTION : c_invadet [Global]
+<<<
+  BONDAGE (AND YOU WILL)
+>>>
+Prototyped in funcs.h
+Type: void c_invadet
+Arguments: char fromnick[] <<<-- who's it from>>>
+Arguments: int level <<<-- what's their level>>>
+Arguments: char arg[] <<<-- any arguments?>>>
+Arguments: int gend <<<-- M/F/N/O>>>
+Calls notice : irc.c
+Calls sprintf
+Calls toupper
+Calls writeline : irc.c
+Used in commands.c
+References Variable mychan : gsserv.c
+
+FUNCTION : c_jimmy [Global]
+<<<
+  uh huh
+>>>
+Prototyped in funcs.h
+Type: void c_jimmy
+Arguments: char fromnick[] <<<-- who's it from>>>
+Arguments: int level <<<-- what's their level>>>
+Arguments: char arg[] <<<-- any arguments>>>
+Arguments: int gend <<<-- M/F/N/O>>>
+Calls sprintf
+Calls writeline : irc.c
+Used in commands.c
+References Variable mychan : gsserv.c
+
+FUNCTION : c_join [Global]
+<<<
+  join a channel. woo woo!
+>>>
+Prototyped in funcs.h
+Type: void c_join
+Arguments: char fromnick[] <<<-- who's it from>>>
+Arguments: int level <<<-- what's their level>>>
+Arguments: char arg[] <<<-- any arguments>>>
+Arguments: int gend <<<-- M/F/N/O>>>
+Calls join : irc.c
+Calls part : irc.c
+Used in commands.c
+References Variable HOMECHAN : config.c
+References Variable mychan : gsserv.c
+
+FUNCTION : c_kick [Global]
+<<<
+  coid c_kick -- kick someone off the channel
+>>>
+Prototyped in funcs.h
+Type: void c_kick
+Arguments: char fromnick[] <<<-- who's it from>>>
+Arguments: int level <<<-- what's their level>>>
+Arguments: char arg[] <<<-- any arguments>>>
+Arguments: int gend <<<-- M/F/N/O>>>
+Calls checkonchannel : irc.c
+Calls kick : irc.c
+Calls notice : irc.c
+Calls sprintf
+Calls strcasecmp
+Used in commands.c
+References Variable mychan : gsserv.c
+References Variable mynick : gsserv.c
+
+FUNCTION : c_ldestroy [Global]
+<<<
+  long mega-destructo
+>>>
+Prototyped in funcs.h
+Type: void c_ldestroy
+Arguments: char fromnick[] <<<-- who's it from>>>
+Arguments: int level <<<-- what's their level>>>
+Arguments: char arg[] <<<-- any arguments>>>
+Arguments: int gend <<<-- M/F/N/O>>>
+Calls ban : irc.c
+Calls checkonchannel : irc.c
+Calls kick : irc.c
+Calls notice : irc.c
+Calls sprintf
+Calls strcasecmp
+Calls writeline : irc.c
+Used in commands.c
+References Variable mychan : gsserv.c
+References Variable mynick : gsserv.c
+
+FUNCTION : c_level [Global]
+<<<
+  user asked for their level; give it to them
+>>>
+Prototyped in funcs.h
+Type: void c_level
+Arguments: char fromnick[] <<<-- who's it from>>>
+Arguments: int level <<<-- what's their level>>>
+Arguments: char arg[] <<<-- arguments>>>
+Arguments: int gend <<<-- M/F/N/O>>>
+Calls checkonchannel : irc.c
+Calls getlevel : userlist.c
+Calls getuserhost : irc.c
+Calls notice : irc.c
+Calls sprintf
+Used in commands.c
+References Variable mynick : gsserv.c
+
+FUNCTION : c_list [Global]
+<<<
+  list all users
+>>>
+Prototyped in funcs.h
+Type: void c_list
+Arguments: char fromnick[] <<<-- who's it from>>>
+Arguments: int level <<<-- what's their level>>>
+Arguments: char arg[] <<<-- any arguments?>>>
+Arguments: int gend <<<-- M/F/N/O>>>
+Calls notice : irc.c
+Used in commands.c
+
+FUNCTION : c_me [Global]
+<<<
+  * GSS licks Emmy
+>>>
+Prototyped in funcs.h
+Type: void c_me
+Arguments: char fromnick[] <<<-- who's it from>>>
+Arguments: int level <<<-- what's their level>>>
+Arguments: char arg[] <<<-- any arguments>>>
+Arguments: int gend <<<-- M/F/N/O>>>
+Calls notice : irc.c
+Calls sprintf
+Calls writeline : irc.c
+Used in commands.c
+References Variable mychan : gsserv.c
+
+FUNCTION : c_mode [Global]
+<<<
+  request a mode change?
+>>>
+Prototyped in funcs.h
+Type: void c_mode
+Arguments: char fromnick[] <<<-- who's it from>>>
+Arguments: int level <<<-- what's their level>>>
+Arguments: char arg[] <<<-- any arguments>>>
+Arguments: int gend <<<-- M/F/N/O>>>
+Calls checkonchannel : irc.c
+Calls mode : irc.c
+Calls notice : irc.c
+Calls sprintf
+Used in commands.c
+References Variable mychan : gsserv.c
+
+FUNCTION : c_msg [Global]
+<<<
+  private messages. toot toot.
+>>>
+Prototyped in funcs.h
+Type: void c_msg
+Arguments: char fromnick[] <<<-- who's it from>>>
+Arguments: int level <<<-- what's their level>>>
+Arguments: char arg[] <<<-- any arguments>>>
+Arguments: int gend <<<-- M/F/N/O>>>
+Calls notice : irc.c
+Calls sprintf
+Calls strcasecmp
+Calls strtok
+Calls writeline : irc.c
+Used in commands.c
+References Variable mynick : gsserv.c
+
+FUNCTION : c_natemode [Global]
+Prototyped in funcs.h
+Type: void c_natemode
+Arguments: char fromnick[]
+Arguments: int level
+Arguments: char arg[]
+Arguments: int gend
+Calls notice : irc.c
+Used in commands.c
+References Variable NATEMODE : gsserv.c
+
+FUNCTION : c_nick [Global]
+<<<
+  change that nick!
+>>>
+Prototyped in funcs.h
+Type: void c_nick
+Arguments: char fromnick[] <<<-- who's it from>>>
+Arguments: int level <<<-- what's their level>>>
+Arguments: char arg[] <<<-- any arguments>>>
+Arguments: int gend <<<-- M/F/N/O>>>
+Calls checkonchannel : irc.c
+Calls notice : irc.c
+Calls sprintf
+Calls strcpy
+Calls writeline : irc.c
+Used in commands.c
+References Variable mynick : gsserv.c
+
+FUNCTION : c_op [Global]
+<<<
+  make someone an operator, like there are those that aren't..
+>>>
+Prototyped in funcs.h
+Type: void c_op
+Arguments: char fromnick[] <<<-- who's it from>>>
+Arguments: int level <<<-- what's their level>>>
+Arguments: char arg[] <<<-- any arguments>>>
+Arguments: int gend <<<-- M/F/N/O>>>
+Calls checkonchannel : irc.c
+Calls mode : irc.c
+Calls notice : irc.c
+Calls sprintf
+Used in commands.c
+References Variable genstr : gsserv.c
+References Variable mychan : gsserv.c
+
+FUNCTION : c_opall [Global]
+<<<
+  OP's all of the registered users on the channel
+>>>
+Prototyped in funcs.h
+Type: void c_opall
+Arguments: char fromnick[]
+Arguments: int level
+Arguments: char arg[]
+Arguments: int gend
+Calls getlevel : userlist.c
+Calls getuserhost : irc.c
+Calls mode : irc.c
+Calls readline : irc.c
+Calls sprintf
+Calls strtok
+Calls writeline : irc.c
+Used in commands.c
+References Variable mychan : gsserv.c
+
+FUNCTION : c_quote [Global]
+<<<
+  put shit directly to the server
+>>>
+Prototyped in funcs.h
+Type: void c_quote
+Arguments: char fromnick[] <<<-- who's it from>>>
+Arguments: int level <<<-- what's their level>>>
+Arguments: char arg[] <<<-- any arguments>>>
+Arguments: int gend <<<-- M/F/N/O>>>
+Calls writeline : irc.c
+Used in commands.c
+
+FUNCTION : c_reload [Global]
+<<<
+  re-load the users file
+>>>
+Prototyped in funcs.h
+Type: void c_reload
+Arguments: char fromnick[] <<<-- who's it from>>>
+Arguments: int level <<<-- what's their level>>>
+Arguments: char arg[] <<<-- any arguments>>>
+Arguments: int gend <<<-- M/F/N/O>>>
+Calls readusers : userlist.c
+Used in commands.c
+
+FUNCTION : c_remove [Global]
+<<<
+  remove a user from the userlist
+>>>
+Prototyped in funcs.h
+Type: void c_remove
+Arguments: char fromnick[] <<<-- who's it from>>>
+Arguments: int level <<<-- what's their level>>>
+Arguments: char arg[] <<<-- any arguments>>>
+Arguments: int gend <<<-- M/F/N/O>>>
+Calls checkonchannel : irc.c
+Calls free
+Calls getuserhost : irc.c
+Calls malloc
+Calls notice : irc.c
+Calls re_comp
+Calls re_exec
+Calls sprintf
+Calls strcasecmp
+Calls strcmp
+Calls to_lower : gsserv.c
+Used in commands.c
+References Variable DIRTYUFILE : config.c
+References Variable head : userlist.c
+
+FUNCTION : c_say [Global]
+<<<
+  say shit
+>>>
+Prototyped in funcs.h
+Type: void c_say
+Arguments: char fromnick[] <<<-- who's it from>>>
+Arguments: int level <<<-- what's their level>>>
+Arguments: char arg[] <<<-- any arguments>>>
+Arguments: int gend <<<-- M/F/N/O>>>
+Calls notice : irc.c
+Calls sprintf
+Calls writeline : irc.c
+Used in commands.c
+References Variable mychan : gsserv.c
+
+FUNCTION : c_sex [Global]
+<<<
+  sick bastard
+>>>
+Prototyped in funcs.h
+Type: void c_sex
+Arguments: char fromnick[] <<<-- who's it from>>>
+Arguments: int level <<<-- what's their level>>>
+Arguments: char arg[] <<<-- any arguments>>>
+Arguments: int gend <<<-- M/F/N/o>>>
+Calls sprintf
+Calls writeline : irc.c
+Used in commands.c
+References Variable mychan : gsserv.c
+
+FUNCTION : c_shutdown [Global]
+<<<
+  certain death
+>>>
+Prototyped in funcs.h
+Type: void c_shutdown
+Arguments: char fromnick[] <<<-- who's it from>>>
+Arguments: int level <<<-- what's their level>>>
+Arguments: char arg[] <<<-- any arguments?>>>
+Arguments: int gend <<<-- M/F/N/O>>>
+Calls quit : irc.c
+Used in commands.c
+
+FUNCTION : c_status [Global]
+<<<
+  Shows the status of: DIRTYUFILE and NATEMODE
+>>>
+Prototyped in funcs.h
+Type: void c_status
+Arguments: char fromnick[] <<<-- who's it from>>>
+Arguments: int level <<<-- what's their level>>>
+Arguments: char arg[] <<<-- any arguments>>>
+Arguments: int gend <<<-- M/F/N/O>>>
+Calls ctime
+Calls notice : irc.c
+Calls sprintf
+Calls time
+Used in commands.c
+References Variable DIRTYUFILE : config.c
+References Variable NATEMODE : gsserv.c
+References Variable head : userlist.c
+References Variable starttime : gsserv.c
+
+FUNCTION : c_topic [Global]
+<<<
+  do topic shit, of course
+>>>
+Prototyped in funcs.h
+Type: void c_topic
+Arguments: char fromnick[] <<<-- who's it from>>>
+Arguments: int level <<<-- what's their level>>>
+Arguments: char arg[] <<<-- any arguments>>>
+Arguments: int gend <<<-- M/F/N/O>>>
+Calls notice : irc.c
+Calls sprintf
+Calls writeline : irc.c
+Used in commands.c
+References Variable mychan : gsserv.c
+
+FUNCTION : c_werd [Global]
+<<<
+  WERD.
+>>>
+Prototyped in funcs.h
+Type: void c_werd
+Arguments: char fromnick[] <<<-- who's it from>>>
+Arguments: int level <<<-- what's their level>>>
+Arguments: char arg[] <<<-- any arguments>>>
+Arguments: int gend <<<-- M/F/N/O>>>
+Calls notice : irc.c
+Calls sprintf
+Used in commands.c
+
+FUNCTION : c_writefile [Global]
+<<<
+  Writes the user file to disk, if needed
+>>>
+Prototyped in funcs.h
+Type: void c_writefile
+Arguments: char fromnick[] <<<-- who's it from>>>
+Arguments: int level <<<-- what's their level>>>
+Arguments: char arg[] <<<-- any arguments>>>
+Arguments: int gend <<<-- M/F/N/O>>>
+Calls checkufile : userlist.c
+Calls notice : irc.c
+Used in commands.c
+References Variable DIRTYUFILE : config.c
+
+FUNCTION : c_wzo [Global]
+<<<
+  that crazy old shit
+>>>
+Prototyped in funcs.h
+Type: void c_wzo
+Arguments: char fromnick[] <<<-- who's it from>>>
+Arguments: int level <<<-- what's their level>>>
+Arguments: char arg[] <<<-- any arguments>>>
+Arguments: int gend <<<-- M/F/N/Ciannait>>>
+Calls sprintf
+Calls writeline : irc.c
+Used in commands.c
+References Variable mychan : gsserv.c
+
+FUNCTION : do_command [Global]
+<<<
+  main function to find/execute command. woot.
+>>>
+Prototyped in funcs.h
+Type: int do_command <<<returns:
+    0 - unknown command or level too low
+    1 - command okay>>>
+Arguments: char cmdname[] <<<-- which command to run>>>
+Arguments: char fromnick[] <<<-- who's it from?>>>
+Arguments: int level <<<-- What's their level?>>>
+Arguments: char arg[] <<<-- the arguments to the command>>>
+Arguments: int gender <<<-- M/F/N/O>>>
+Calls dlsym
+Calls strcasecmp
+Calls strcmp
+Called from gotmsgtome : irc.c
+References Variable Commands : commands.c
+References Variable cmdlist : commands.c
+----------------------------------------
+
+----------------------------------------
+FILE : 'config.c'
+<<<
+  $Header: /dorks/tdo/cvsroot/gsserv-5.1/src/config.c,v 1.1.1.1.2.3.2.2 1998/08/06 06:23:30 tdo Exp $
+
+  CONFIG.C
+
+  read from my sexy new config file
+>>>
+
+INCLUDES : 'gsserv.h' [Local file]
+
+INCLUDES : 'config.h' [Local file]
+
+INCLUDES : 'funcs.h' [Local file]
+
+INCLUDES : 'modules.h' [Local file]
+   INCLUDES : 'dlfcn.h' [System file]
+   INCLUDES : 'mods-common.h' [Local file]
+
+INCLUDES : 'stdio.h' [System file]
+
+DEFINES : 'INC_CONFIG_C' 
+<<<
+ so heads know who included them 
+>>>
+
+VARIABLE : mynick [External from header file]
+<<<
+ The pushback stack???   GSServ's nick 
+>>>
+Type: char mynick[10]
+
+VARIABLE : mychan [External from header file]
+<<<
+ The channel it will join 
+>>>
+Type: char mychan[50]
+
+VARIABLE : ssock [External from header file]
+<<<
+ The socket descriptor 
+>>>
+Type: int ssock
+
+VARIABLE : getpush [External from header file]
+<<<
+ ??? 
+>>>
+Type: int getpush
+
+VARIABLE : quitflag [External from header file]
+<<<
+ Should GSServ quit 
+>>>
+Type: int quitflag
+
+VARIABLE : NATEMODE [External from header file]
+<<<
+ NATEMODE flag 
+>>>
+Type: int NATEMODE
+
+VARIABLE : starttime [External from header file]
+<<<
+ The time GSServ was started up 
+>>>
+Type: long starttime
+
+VARIABLE : signame [External from header file]
+<<<
+ The quit messages for the different signals 
+>>>
+Type: char* signame[]
+
+VARIABLE : DEFAULTNICK [Global]
+<<<
+ are we including from config.c?   GSServ's nick 
+>>>
+Type: char DEFAULTNICK[10]
+Included from: config.h
+Visible in commands.c
+Visible in config.c
+Visible in config.h
+Visible in gsserv.c
+Visible in irc.c
+Visible in userlist.c
+Used in config_read : config.c
+Used in main : gsserv.c
+
+VARIABLE : LOGINNAME [Global]
+<<<
+ GSServ's username 
+>>>
+Type: char LOGINNAME[9]
+Included from: config.h
+Visible in commands.c
+Visible in config.c
+Visible in config.h
+Visible in gsserv.c
+Visible in irc.c
+Visible in userlist.c
+Used in config_read : config.c
+Used in main : gsserv.c
+
+VARIABLE : IRCUSER [Global]
+<<<
+ Gecos stuff 
+>>>
+Type: char IRCUSER[1024]
+Included from: config.h
+Visible in commands.c
+Visible in config.c
+Visible in config.h
+Visible in gsserv.c
+Visible in irc.c
+Visible in userlist.c
+Used in config_read : config.c
+Used in main : gsserv.c
+
+VARIABLE : VERSION [Global]
+<<<
+ version string 
+>>>
+Type: char VERSION[1024]
+Included from: config.h
+Visible in commands.c
+Visible in config.c
+Visible in config.h
+Visible in gsserv.c
+Visible in irc.c
+Visible in userlist.c
+Used in config_read : config.c
+Used in gotctcp : irc.c
+
+VARIABLE : DEFAULTSERVER [Global]
+<<<
+ server to connect to 
+>>>
+Type: char DEFAULTSERVER[1024]
+Included from: config.h
+Visible in commands.c
+Visible in config.c
+Visible in config.h
+Visible in gsserv.c
+Visible in irc.c
+Visible in userlist.c
+Used in config_read : config.c
+Used in main : gsserv.c
+
+VARIABLE : HOMECHAN [Global]
+<<<
+ The channel to connect to 
+>>>
+Type: char HOMECHAN[1024]
+Included from: config.h
+Visible in commands.c
+Visible in config.c
+Visible in config.h
+Visible in gsserv.c
+Visible in irc.c
+Visible in userlist.c
+Used in c_join : commands.c
+Used in config_read : config.c
+Used in main : gsserv.c
+
+VARIABLE : USERFILE [Global]
+<<<
+ where's the user file 
+>>>
+Type: char USERFILE[1024]
+Included from: config.h
+Visible in commands.c
+Visible in config.c
+Visible in config.h
+Visible in gsserv.c
+Visible in irc.c
+Visible in userlist.c
+Used in checkufile : userlist.c
+Used in config_read : config.c
+Used in readusers : userlist.c
+
+VARIABLE : HELPDIR [Global]
+<<<
+ where's the help dir 
+>>>
+Type: char HELPDIR[1024]
+Included from: config.h
+Visible in commands.c
+Visible in config.c
+Visible in config.h
+Visible in gsserv.c
+Visible in irc.c
+Visible in userlist.c
+Used in config_read : config.c
+
+VARIABLE : DEFAULTDIR [Global]
+<<<
+ the default directory to look in for help and userfile
+>>>
+Type: char DEFAULTDIR[1024]
+Included from: config.h
+Visible in commands.c
+Visible in config.c
+Visible in config.h
+Visible in gsserv.c
+Visible in irc.c
+Visible in userlist.c
+Used in config_read : config.c
+Used in readusers : userlist.c
+
+VARIABLE : DEFAULTPORT [Global]
+<<<
+ the default port to connect to on the server 
+>>>
+Type: int DEFAULTPORT
+Included from: config.h
+Visible in commands.c
+Visible in config.c
+Visible in config.h
+Visible in gsserv.c
+Visible in irc.c
+Visible in userlist.c
+Used in config_read : config.c
+Used in connectserver : irc.c
+
+VARIABLE : flood_ctl [Global]
+<<<
+ flood control 
+>>>
+Type: int flood_ctl
+Included from: config.h
+Visible in commands.c
+Visible in config.c
+Visible in config.h
+Visible in gsserv.c
+Visible in irc.c
+Visible in userlist.c
+Used in config_read : config.c
+Used in gotkick : irc.c
+Used in gotserverop : irc.c
+Used in gotuserop : irc.c
+Used in mode : irc.c
+Used in writeline : irc.c
+
+VARIABLE : DIRTYUFILE [Global]
+<<<
+ For adding new users at run time 
+>>>
+Type: int DIRTYUFILE
+Included from: config.h
+Visible in commands.c
+Visible in config.c
+Visible in config.h
+Visible in gsserv.c
+Visible in irc.c
+Visible in userlist.c
+Used in addentry : userlist.c
+Used in c_remove : commands.c
+Used in c_status : commands.c
+Used in c_writefile : commands.c
+Used in checkufile : userlist.c
+Used in readusers : userlist.c
+
+VARIABLE : OnJoin [Global]
+<<<
+ Add's a hook to the given event   Remove's a hook   Add's a command   Remove's a command 
+>>>
+Type: EventList* OnJoin
+Included from: modules.h
+Visible in commands.c
+Visible in config.c
+Visible in gsserv.c
+Visible in irc.c
+Visible in modules.c
+Visible in modules.h
+Used in AddHook : modules.c
+Used in RemoveHook : modules.c
+
+VARIABLE : OnLeave [Global]
+Type: EventList* OnLeave
+Included from: modules.h
+Visible in commands.c
+Visible in config.c
+Visible in gsserv.c
+Visible in irc.c
+Visible in modules.c
+Visible in modules.h
+Used in AddHook : modules.c
+Used in RemoveHook : modules.c
+
+VARIABLE : OnQuit [Global]
+Type: EventList* OnQuit
+Included from: modules.h
+Visible in commands.c
+Visible in config.c
+Visible in gsserv.c
+Visible in irc.c
+Visible in modules.c
+Visible in modules.h
+Used in AddHook : modules.c
+Used in RemoveHook : modules.c
+
+VARIABLE : OnKick [Global]
+Type: EventList* OnKick
+Included from: modules.h
+Visible in commands.c
+Visible in config.c
+Visible in gsserv.c
+Visible in irc.c
+Visible in modules.c
+Visible in modules.h
+Used in AddHook : modules.c
+Used in RemoveHook : modules.c
+
+VARIABLE : OnSay [Global]
+Type: EventList* OnSay
+Included from: modules.h
+Visible in commands.c
+Visible in config.c
+Visible in gsserv.c
+Visible in irc.c
+Visible in modules.c
+Visible in modules.h
+Used in AddHook : modules.c
+Used in RemoveHook : modules.c
+Used in gotprivmsg : irc.c
+
+VARIABLE : OnMe [Global]
+Type: EventList* OnMe
+Included from: modules.h
+Visible in commands.c
+Visible in config.c
+Visible in gsserv.c
+Visible in irc.c
+Visible in modules.c
+Visible in modules.h
+Used in AddHook : modules.c
+Used in RemoveHook : modules.c
+
+VARIABLE : OnNotice [Global]
+Type: EventList* OnNotice
+Included from: modules.h
+Visible in commands.c
+Visible in config.c
+Visible in gsserv.c
+Visible in irc.c
+Visible in modules.c
+Visible in modules.h
+Used in AddHook : modules.c
+Used in RemoveHook : modules.c
+
+VARIABLE : OnCNotice [Global]
+Type: EventList* OnCNotice
+Included from: modules.h
+Visible in commands.c
+Visible in config.c
+Visible in gsserv.c
+Visible in irc.c
+Visible in modules.c
+Visible in modules.h
+Used in AddHook : modules.c
+Used in RemoveHook : modules.c
+
+VARIABLE : OnMode [Global]
+Type: EventList* OnMode
+Included from: modules.h
+Visible in commands.c
+Visible in config.c
+Visible in gsserv.c
+Visible in irc.c
+Visible in modules.c
+Visible in modules.h
+Used in AddHook : modules.c
+Used in RemoveHook : modules.c
+
+VARIABLE : OnTopic [Global]
+Type: EventList* OnTopic
+Included from: modules.h
+Visible in commands.c
+Visible in config.c
+Visible in gsserv.c
+Visible in irc.c
+Visible in modules.c
+Visible in modules.h
+Used in AddHook : modules.c
+Used in RemoveHook : modules.c
+
+VARIABLE : Commands [Global]
+Type: CmdList* Commands
+Included from: modules.h
+Visible in commands.c
+Visible in config.c
+Visible in gsserv.c
+Visible in irc.c
+Visible in modules.c
+Visible in modules.h
+Used in AddCommand : modules.c
+Used in RemoveCommand : modules.c
+Used in do_command : commands.c
+
+FUNCTION : config_read [Global]
+<<<
+  This function reads in the contents of the file passed to it and sets
+  global (ugh) variables accordingly
+>>>
+Prototyped in funcs.h
+Type: void config_read
+Arguments: char* file <<<-- name of the file>>>
+Calls atoi
+Calls dlerror
+Calls dlopen
+Calls dlsym
+Calls exit
+Calls fclose
+Calls fopen
+Calls fprintf
+Calls my_fgets : config.c
+Calls perror
+Calls strlen
+Calls strncat
+Calls strncpy
+Called from main : gsserv.c
+References Variable DEFAULTDIR : config.c
+References Variable DEFAULTNICK : config.c
+References Variable DEFAULTPORT : config.c
+References Variable DEFAULTSERVER : config.c
+References Variable HELPDIR : config.c
+References Variable HOMECHAN : config.c
+References Variable IRCUSER : config.c
+References Variable LOGINNAME : config.c
+References Variable USERFILE : config.c
+References Variable VERSION : config.c
+References Variable flood_ctl : config.c
+
+FUNCTION : my_fgets [Global]
+<<<
+  Getting around some other shit
+>>>
+Type: char* my_fgets <<<-- returns the string it got>>>
+Arguments: char* s <<<-- string to store the return string in>>>
+Arguments: int n <<<-- how big is s?>>>
+Arguments: FILE* stream <<<-- where to get the string from>>>
+Calls fgetc
+Called from config_read : config.c
+----------------------------------------
+
+----------------------------------------
+FILE : 'gsserv.c'
+<<<
+  $Header: /dorks/tdo/cvsroot/gsserv-5.1/src/gsserv.c,v 1.1.1.1.2.4.2.1 1998/08/02 22:30:52 tdo Exp $
+
+  GSSERV.C
+
+  just has main() and some other shit that didn't fit elsewhere
+>>>
+
+INCLUDES : 'gsserv.h' [Local file]
+
+INCLUDES : 'config.h' [Local file]
+
+INCLUDES : 'funcs.h' [Local file]
+
+INCLUDES : 'modules.h' [Local file]
+   INCLUDES : 'dlfcn.h' [System file]
+   INCLUDES : 'mods-common.h' [Local file]
+
+INCLUDES : 'sys/types.h' [System file]
+
+INCLUDES : 'stdio.h' [System file]
+
+INCLUDES : 'stdlib.h' [System file]
+
+INCLUDES : 'string.h' [System file]
+
+INCLUDES : 'ctype.h' [System file]
+
+INCLUDES : 'sys/socket.h' [System file]
+
+INCLUDES : 'errno.h' [System file]
+
+INCLUDES : 'netdb.h' [Local file]
+
+INCLUDES : 'netinet/in.h' [System file]
+
+INCLUDES : 'arpa/inet.h' [System file]
+
+INCLUDES : 'signal.h' [System file]
+
+INCLUDES : 'setjmp.h' [System file]
+
+INCLUDES : 'fcntl.h' [System file]
+
+INCLUDES : 'sys/ioctl.h' [System file]
+
+INCLUDES : 'time.h' [System file]
+
+INCLUDES : 'unistd.h' [System file]
+
+DEFINES : 'INC_GSSERV_C' 
+<<<
+ So headers know who is including them 
+>>>
+
+VARIABLE : mynick [Global]
+<<<
+ The pushback stack???   GSServ's nick 
+>>>
+Type: char mynick[10]
+Included from: gsserv.h
+Visible in commands.c
+Visible in config.c
+Visible in gsserv.c
+Visible in gsserv.h
+Visible in help.c
+Visible in irc.c
+Visible in mods.h
+Visible in userlist.c
+Used in c_ban : commands.c
+Used in c_bankick : commands.c
+Used in c_bitchslap : commands.c
+Used in c_deop : commands.c
+Used in c_destroy : commands.c
+Used in c_help : commands.c
+Used in c_kick : commands.c
+Used in c_ldestroy : commands.c
+Used in c_level : commands.c
+Used in c_msg : commands.c
+Used in c_nick : commands.c
+Used in gotkick : irc.c
+Used in gotmsgtome : irc.c
+Used in gotnick : irc.c
+Used in gotprivmsg : irc.c
+Used in main : gsserv.c
+Used in nick : irc.c
+Used in pong : irc.c
+Used in printhelp : help.c
+
+VARIABLE : mychan [Global]
+<<<
+ The channel it will join 
+>>>
+Type: char mychan[50]
+Included from: gsserv.h
+Visible in commands.c
+Visible in config.c
+Visible in gsserv.c
+Visible in gsserv.h
+Visible in help.c
+Visible in irc.c
+Visible in mods.h
+Visible in userlist.c
+Used in c_ban : commands.c
+Used in c_bankick : commands.c
+Used in c_bitchslap : commands.c
+Used in c_deop : commands.c
+Used in c_destroy : commands.c
+Used in c_dream : commands.c
+Used in c_haywood : commands.c
+Used in c_invade : commands.c
+Used in c_invadem : commands.c
+Used in c_invadet : commands.c
+Used in c_jimmy : commands.c
+Used in c_join : commands.c
+Used in c_kick : commands.c
+Used in c_ldestroy : commands.c
+Used in c_me : commands.c
+Used in c_mode : commands.c
+Used in c_op : commands.c
+Used in c_opall : commands.c
+Used in c_say : commands.c
+Used in c_sex : commands.c
+Used in c_topic : commands.c
+Used in c_wzo : commands.c
+Used in checkonchannel : irc.c
+Used in getinfo : irc.c
+Used in gotjoin : irc.c
+Used in gotkick : irc.c
+Used in gotsignal2 : gsserv.c
+Used in join : irc.c
+Used in kick : irc.c
+Used in main : gsserv.c
+Used in mode : irc.c
+Used in printhelp : help.c
+
+VARIABLE : ssock [Global]
+<<<
+ The socket descriptor 
+>>>
+Type: int ssock
+Included from: gsserv.h
+Visible in commands.c
+Visible in config.c
+Visible in gsserv.c
+Visible in gsserv.h
+Visible in help.c
+Visible in irc.c
+Visible in mods.h
+Visible in userlist.c
+Used in connectserver : irc.c
+Used in gotsignal : gsserv.c
+Used in main : gsserv.c
+Used in readline : irc.c
+Used in writeline : irc.c
+
+VARIABLE : getpush [Global]
+<<<
+ ??? 
+>>>
+Type: int getpush
+Included from: gsserv.h
+Visible in commands.c
+Visible in config.c
+Visible in gsserv.c
+Visible in gsserv.h
+Visible in help.c
+Visible in irc.c
+Visible in mods.h
+Visible in userlist.c
+Used in checkonchannel : irc.c
+Used in getinfo : irc.c
+Used in getuserhost : irc.c
+Used in main : gsserv.c
+Used in readline : irc.c
+Used in waitforstuff : gsserv.c
+
+VARIABLE : quitflag [Global]
+<<<
+ Should GSServ quit 
+>>>
+Type: int quitflag
+Included from: gsserv.h
+Visible in commands.c
+Visible in config.c
+Visible in gsserv.c
+Visible in gsserv.h
+Visible in help.c
+Visible in irc.c
+Visible in mods.h
+Visible in userlist.c
+Used in main : gsserv.c
+Used in quit : irc.c
+
+VARIABLE : NATEMODE [Global]
+<<<
+ NATEMODE flag 
+>>>
+Type: int NATEMODE
+Included from: gsserv.h
+Visible in commands.c
+Visible in config.c
+Visible in gsserv.c
+Visible in gsserv.h
+Visible in help.c
+Visible in irc.c
+Visible in mods.h
+Visible in userlist.c
+Used in c_natemode : commands.c
+Used in c_status : commands.c
+Used in gotjoin : irc.c
+Used in main : gsserv.c
+
+VARIABLE : starttime [Global]
+<<<
+ The time GSServ was started up 
+>>>
+Type: long starttime
+Included from: gsserv.h
+Visible in commands.c
+Visible in config.c
+Visible in gsserv.c
+Visible in gsserv.h
+Visible in help.c
+Visible in irc.c
+Visible in mods.h
+Visible in userlist.c
+Used in c_info : commands.c
+Used in c_status : commands.c
+Used in main : gsserv.c
+
+VARIABLE : signame [Global]
+<<<
+ The quit messages for different signals 
+>>>
+Type: char* signame[]
+Included from: gsserv.h
+Visible in commands.c
+Visible in config.c
+Visible in gsserv.c
+Visible in gsserv.h
+Visible in help.c
+Visible in irc.c
+Visible in mods.h
+Visible in userlist.c
+Used in gotsignal : gsserv.c
+
+VARIABLE : DEFAULTNICK [External from header file]
+<<<
+ are we including from config.c?   GSServ's nick 
+>>>
+Type: char DEFAULTNICK[10]
+
+VARIABLE : LOGINNAME [External from header file]
+<<<
+ GSServ's username 
+>>>
+Type: char LOGINNAME[9]
+
+VARIABLE : IRCUSER [External from header file]
+<<<
+ Gecos stuff 
+>>>
+Type: char IRCUSER[1024]
+
+VARIABLE : VERSION [External from header file]
+<<<
+ version string 
+>>>
+Type: char VERSION[1024]
+
+VARIABLE : DEFAULTSERVER [External from header file]
+<<<
+ server to connect to 
+>>>
+Type: char DEFAULTSERVER[1024]
+
+VARIABLE : HOMECHAN [External from header file]
+<<<
+ The channel to connect to 
+>>>
+Type: char HOMECHAN[1024]
+
+VARIABLE : USERFILE [External from header file]
+<<<
+ where's the user file 
+>>>
+Type: char USERFILE[1024]
+
+VARIABLE : HELPDIR [External from header file]
+<<<
+ where's the help dir 
+>>>
+Type: char HELPDIR[1024]
+
+VARIABLE : DEFAULTDIR [External from header file]
+<<<
+ the default directory to look in for help and userfile
+>>>
+Type: char DEFAULTDIR[1024]
+
+VARIABLE : DEFAULTPORT [External from header file]
+<<<
+ the default port to connect to on the server 
+>>>
+Type: int DEFAULTPORT
+
+VARIABLE : flood_ctl [External from header file]
+<<<
+ flood control 
+>>>
+Type: int flood_ctl
+
+VARIABLE : DIRTYUFILE [External from header file]
+<<<
+ For adding new users at run time 
+>>>
+Type: int DIRTYUFILE
+
+VARIABLE : OnJoin [Global]
+<<<
+ Add's a hook to the given event   Remove's a hook   Add's a command   Remove's a command 
+>>>
+Type: EventList* OnJoin
+Included from: modules.h
+Visible in commands.c
+Visible in config.c
+Visible in gsserv.c
+Visible in irc.c
+Visible in modules.c
+Visible in modules.h
+Used in AddHook : modules.c
+Used in RemoveHook : modules.c
+
+VARIABLE : OnLeave [Global]
+Type: EventList* OnLeave
+Included from: modules.h
+Visible in commands.c
+Visible in config.c
+Visible in gsserv.c
+Visible in irc.c
+Visible in modules.c
+Visible in modules.h
+Used in AddHook : modules.c
+Used in RemoveHook : modules.c
+
+VARIABLE : OnQuit [Global]
+Type: EventList* OnQuit
+Included from: modules.h
+Visible in commands.c
+Visible in config.c
+Visible in gsserv.c
+Visible in irc.c
+Visible in modules.c
+Visible in modules.h
+Used in AddHook : modules.c
+Used in RemoveHook : modules.c
+
+VARIABLE : OnKick [Global]
+Type: EventList* OnKick
+Included from: modules.h
+Visible in commands.c
+Visible in config.c
+Visible in gsserv.c
+Visible in irc.c
+Visible in modules.c
+Visible in modules.h
+Used in AddHook : modules.c
+Used in RemoveHook : modules.c
+
+VARIABLE : OnSay [Global]
+Type: EventList* OnSay
+Included from: modules.h
+Visible in commands.c
+Visible in config.c
+Visible in gsserv.c
+Visible in irc.c
+Visible in modules.c
+Visible in modules.h
+Used in AddHook : modules.c
+Used in RemoveHook : modules.c
+Used in gotprivmsg : irc.c
+
+VARIABLE : OnMe [Global]
+Type: EventList* OnMe
+Included from: modules.h
+Visible in commands.c
+Visible in config.c
+Visible in gsserv.c
+Visible in irc.c
+Visible in modules.c
+Visible in modules.h
+Used in AddHook : modules.c
+Used in RemoveHook : modules.c
+
+VARIABLE : OnNotice [Global]
+Type: EventList* OnNotice
+Included from: modules.h
+Visible in commands.c
+Visible in config.c
+Visible in gsserv.c
+Visible in irc.c
+Visible in modules.c
+Visible in modules.h
+Used in AddHook : modules.c
+Used in RemoveHook : modules.c
+
+VARIABLE : OnCNotice [Global]
+Type: EventList* OnCNotice
+Included from: modules.h
+Visible in commands.c
+Visible in config.c
+Visible in gsserv.c
+Visible in irc.c
+Visible in modules.c
+Visible in modules.h
+Used in AddHook : modules.c
+Used in RemoveHook : modules.c
+
+VARIABLE : OnMode [Global]
+Type: EventList* OnMode
+Included from: modules.h
+Visible in commands.c
+Visible in config.c
+Visible in gsserv.c
+Visible in irc.c
+Visible in modules.c
+Visible in modules.h
+Used in AddHook : modules.c
+Used in RemoveHook : modules.c
+
+VARIABLE : OnTopic [Global]
+Type: EventList* OnTopic
+Included from: modules.h
+Visible in commands.c
+Visible in config.c
+Visible in gsserv.c
+Visible in irc.c
+Visible in modules.c
+Visible in modules.h
+Used in AddHook : modules.c
+Used in RemoveHook : modules.c
+
+VARIABLE : Commands [Global]
+Type: CmdList* Commands
+Included from: modules.h
+Visible in commands.c
+Visible in config.c
+Visible in gsserv.c
+Visible in irc.c
+Visible in modules.c
+Visible in modules.h
+Used in AddCommand : modules.c
+Used in RemoveCommand : modules.c
+Used in do_command : commands.c
+
+VARIABLE : genstr [Global]
+Type: char* genstr[]
+Visible in commands.c
+Visible in gsserv.c
+Used in c_op : commands.c
+
+VARIABLE : my_env [Global]
+<<<
+ gender strings 
+>>>
+Type: jmp_buf my_env
+Visible in gsserv.c
+Used in gotsignal : gsserv.c
+Used in main : gsserv.c
+
+VARIABLE : my_env2 [Global]
+<<<
+ gender strings   so we can restart nicely after a crash? 
+>>>
+Type: jmp_buf my_env2
+Visible in gsserv.c
+Used in gotsignal2 : gsserv.c
+Used in main : gsserv.c
+
+FUNCTION : ginitial [Global]
+<<<
+  Change a numeric gender into a character
+>>>
+Type: char ginitial <<<-- returns the gender character>>>
+Arguments: int genin <<<-- the gender [0-3]>>>
+
+FUNCTION : gotsignal [Global]
+<<<
+  Handles all signals, except SIGWINCH
+>>>
+Type: int gotsignal
+Arguments: int sig
+Arguments: int code
+Arguments: struct sigcontext* scp
+Arguments: char* addr <<< struct sigcontext *scp
+
+  char *addr>>>
+Calls checkufile : userlist.c
+Calls close
+Calls exit
+Calls longjmp
+Calls printf
+Calls sprintf
+Calls writeline : irc.c
+Used in main : gsserv.c
+References Variable my_env : gsserv.c
+References Variable signame : gsserv.c
+References Variable ssock : gsserv.c
+
+FUNCTION : gotsignal2 [Global]
+<<<
+  Handles currently only a SIGWINCH
+>>>
+Type: int gotsignal2
+Arguments: int sig
+Arguments: int code
+Arguments: struct sigcontext* scp
+Arguments: char* addr <<< struct sigcontext *scp
+
+  char *addr>>>
+Calls checkufile : userlist.c
+Calls longjmp
+Calls sprintf
+Calls writeline : irc.c
+Used in main : gsserv.c
+References Variable my_env2 : gsserv.c
+References Variable mychan : gsserv.c
+
+FUNCTION : main [Global]
+<<<
+  _THE_ main event!
+>>>
+Type: int main <<<-- returns when serv is shutdown or dies>>>
+Arguments: int argc <<<-- number of command line arguments>>>
+Arguments: char* argv[] <<<-- the command line arguments>>>
+Calls checkufile : userlist.c
+Calls close
+Calls config_read : config.c
+Calls connectserver : irc.c
+Calls exit
+Calls fork
+Calls ioctl
+Calls join : irc.c
+Calls nick : irc.c
+Calls open
+Calls readline : irc.c
+Calls readusers : userlist.c
+Calls setbuf
+Calls setjmp
+Calls signal
+Calls sleep
+Calls sprintf
+Calls srandom
+Calls strcpy
+Calls time
+Calls waitforstuff : gsserv.c
+Calls writeline : irc.c
+References Function gotsignal : gsserv.c
+References Function gotsignal2 : gsserv.c
+References Variable DEFAULTNICK : config.c
+References Variable DEFAULTSERVER : config.c
+References Variable HOMECHAN : config.c
+References Variable IRCUSER : config.c
+References Variable LOGINNAME : config.c
+References Variable NATEMODE : gsserv.c
+References Variable getpush : gsserv.c
+References Variable my_env : gsserv.c
+References Variable my_env2 : gsserv.c
+References Variable mychan : gsserv.c
+References Variable mynick : gsserv.c
+References Variable quitflag : gsserv.c
+References Variable ssock : gsserv.c
+References Variable starttime : gsserv.c
+
+FUNCTION : to_lower [Global]
+<<<
+  Converts a string to lower case
+>>>
+Type: void to_lower
+Arguments: char str[] <<<-- the string to be converted in place>>>
+Calls __tolower
+Called from c_add : commands.c
+Called from c_remove : commands.c
+Called from getlevel : userlist.c
+
+FUNCTION : waitforstuff [Global]
+<<<
+  Wait for something from the server & then process it
+>>>
+Type: int waitforstuff <<<-- returns -1 on error>>>
+Arguments: void
+Calls lservermsg : irc.c
+Calls parseline : irc.c
+Calls readline : irc.c
+Calls server2user : irc.c
+Calls user2user : irc.c
+Called from main : gsserv.c
+References Variable getpush : gsserv.c
+----------------------------------------
+
+----------------------------------------
+FILE : 'help.c'
+<<<
+  $Header: /dorks/tdo/cvsroot/gsserv-5.1/src/help.c,v 1.1.1.1.2.9 1998/08/02 05:46:22 tdo Exp $
+
+  HELP.C
+
+  contains all the helpful help text
+>>>
+
+INCLUDES : 'gsserv.h' [Local file]
+
+INCLUDES : 'funcs.h' [Local file]
+
+INCLUDES : 'stdio.h' [System file]
+
+DEFINES : 'INC_HELP_C' 
+<<<
+ So headerfiles know who included them 
+>>>
+
+VARIABLE : mynick [External from header file]
+<<<
+ The pushback stack???   GSServ's nick 
+>>>
+Type: char mynick[10]
+
+VARIABLE : mychan [External from header file]
+<<<
+ The channel it will join 
+>>>
+Type: char mychan[50]
+
+VARIABLE : ssock [External from header file]
+<<<
+ The socket descriptor 
+>>>
+Type: int ssock
+
+VARIABLE : getpush [External from header file]
+<<<
+ ??? 
+>>>
+Type: int getpush
+
+VARIABLE : quitflag [External from header file]
+<<<
+ Should GSServ quit 
+>>>
+Type: int quitflag
+
+VARIABLE : NATEMODE [External from header file]
+<<<
+ NATEMODE flag 
+>>>
+Type: int NATEMODE
+
+VARIABLE : starttime [External from header file]
+<<<
+ The time GSServ was started up 
+>>>
+Type: long starttime
+
+VARIABLE : signame [External from header file]
+<<<
+ The quit messages for the different signals 
+>>>
+Type: char* signame[]
+
+FUNCTION : printhelp [Global]
+<<<
+  Print the help
+>>>
+Prototyped in funcs.h
+Type: void printhelp
+Arguments: char from[] <<<-- who's the request from>>>
+Arguments: int usrlevel <<<-- what's their level>>>
+Arguments: int number <<<-- which help to print>>>
+Calls notice : irc.c
+Calls sleep
+Calls sprintf
+Called from c_help : commands.c
+References Variable mychan : gsserv.c
+References Variable mynick : gsserv.c
+----------------------------------------
+
+----------------------------------------
+FILE : 'irc.c'
+<<<
+  $Header: /dorks/tdo/cvsroot/gsserv-5.1/src/irc.c,v 1.1.1.1.2.2.2.2 1998/08/06 06:23:31 tdo Exp $
+
+  IRC.C
+
+  all the shit for handling socket connections and dealing
+  with messages from the server
+>>>
+
+INCLUDES : 'gsserv.h' [Local file]
+
+INCLUDES : 'config.h' [Local file]
+
+INCLUDES : 'funcs.h' [Local file]
+
+INCLUDES : 'modules.h' [Local file]
+   INCLUDES : 'dlfcn.h' [System file]
+   INCLUDES : 'mods-common.h' [Local file]
+
+INCLUDES : 'arpa/inet.h' [System file]
+
+INCLUDES : 'netinet/in.h' [System file]
+
+INCLUDES : 'netdb.h' [Local file]
+
+INCLUDES : 'sys/types.h' [System file]
+
+INCLUDES : 'sys/socket.h' [System file]
+
+INCLUDES : 'stdio.h' [System file]
+
+INCLUDES : 'time.h' [System file]
+
+DEFINES : 'INC_IRC_C' 
+<<<
+ So header files know who included them 
+>>>
+
+VARIABLE : mynick [External from header file]
+<<<
+ The pushback stack???   GSServ's nick 
+>>>
+Type: char mynick[10]
+
+VARIABLE : mychan [External from header file]
+<<<
+ The channel it will join 
+>>>
+Type: char mychan[50]
+
+VARIABLE : ssock [External from header file]
+<<<
+ The socket descriptor 
+>>>
+Type: int ssock
+
+VARIABLE : getpush [External from header file]
+<<<
+ ??? 
+>>>
+Type: int getpush
+
+VARIABLE : quitflag [External from header file]
+<<<
+ Should GSServ quit 
+>>>
+Type: int quitflag
+
+VARIABLE : NATEMODE [External from header file]
+<<<
+ NATEMODE flag 
+>>>
+Type: int NATEMODE
+
+VARIABLE : starttime [External from header file]
+<<<
+ The time GSServ was started up 
+>>>
+Type: long starttime
+
+VARIABLE : signame [External from header file]
+<<<
+ The quit messages for the different signals 
+>>>
+Type: char* signame[]
+
+VARIABLE : DEFAULTNICK [External from header file]
+<<<
+ are we including from config.c?   GSServ's nick 
+>>>
+Type: char DEFAULTNICK[10]
+
+VARIABLE : LOGINNAME [External from header file]
+<<<
+ GSServ's username 
+>>>
+Type: char LOGINNAME[9]
+
+VARIABLE : IRCUSER [External from header file]
+<<<
+ Gecos stuff 
+>>>
+Type: char IRCUSER[1024]
+
+VARIABLE : VERSION [External from header file]
+<<<
+ version string 
+>>>
+Type: char VERSION[1024]
+
+VARIABLE : DEFAULTSERVER [External from header file]
+<<<
+ server to connect to 
+>>>
+Type: char DEFAULTSERVER[1024]
+
+VARIABLE : HOMECHAN [External from header file]
+<<<
+ The channel to connect to 
+>>>
+Type: char HOMECHAN[1024]
+
+VARIABLE : USERFILE [External from header file]
+<<<
+ where's the user file 
+>>>
+Type: char USERFILE[1024]
+
+VARIABLE : HELPDIR [External from header file]
+<<<
+ where's the help dir 
+>>>
+Type: char HELPDIR[1024]
+
+VARIABLE : DEFAULTDIR [External from header file]
+<<<
+ the default directory to look in for help and userfile
+>>>
+Type: char DEFAULTDIR[1024]
+
+VARIABLE : DEFAULTPORT [External from header file]
+<<<
+ the default port to connect to on the server 
+>>>
+Type: int DEFAULTPORT
+
+VARIABLE : flood_ctl [External from header file]
+<<<
+ flood control 
+>>>
+Type: int flood_ctl
+
+VARIABLE : DIRTYUFILE [External from header file]
+<<<
+ For adding new users at run time 
+>>>
+Type: int DIRTYUFILE
+
+VARIABLE : OnJoin [Global]
+<<<
+ Add's a hook to the given event   Remove's a hook   Add's a command   Remove's a command 
+>>>
+Type: EventList* OnJoin
+Included from: modules.h
+Visible in commands.c
+Visible in config.c
+Visible in gsserv.c
+Visible in irc.c
+Visible in modules.c
+Visible in modules.h
+Used in AddHook : modules.c
+Used in RemoveHook : modules.c
+
+VARIABLE : OnLeave [Global]
+Type: EventList* OnLeave
+Included from: modules.h
+Visible in commands.c
+Visible in config.c
+Visible in gsserv.c
+Visible in irc.c
+Visible in modules.c
+Visible in modules.h
+Used in AddHook : modules.c
+Used in RemoveHook : modules.c
+
+VARIABLE : OnQuit [Global]
+Type: EventList* OnQuit
+Included from: modules.h
+Visible in commands.c
+Visible in config.c
+Visible in gsserv.c
+Visible in irc.c
+Visible in modules.c
+Visible in modules.h
+Used in AddHook : modules.c
+Used in RemoveHook : modules.c
+
+VARIABLE : OnKick [Global]
+Type: EventList* OnKick
+Included from: modules.h
+Visible in commands.c
+Visible in config.c
+Visible in gsserv.c
+Visible in irc.c
+Visible in modules.c
+Visible in modules.h
+Used in AddHook : modules.c
+Used in RemoveHook : modules.c
+
+VARIABLE : OnSay [Global]
+Type: EventList* OnSay
+Included from: modules.h
+Visible in commands.c
+Visible in config.c
+Visible in gsserv.c
+Visible in irc.c
+Visible in modules.c
+Visible in modules.h
+Used in AddHook : modules.c
+Used in RemoveHook : modules.c
+Used in gotprivmsg : irc.c
+
+VARIABLE : OnMe [Global]
+Type: EventList* OnMe
+Included from: modules.h
+Visible in commands.c
+Visible in config.c
+Visible in gsserv.c
+Visible in irc.c
+Visible in modules.c
+Visible in modules.h
+Used in AddHook : modules.c
+Used in RemoveHook : modules.c
+
+VARIABLE : OnNotice [Global]
+Type: EventList* OnNotice
+Included from: modules.h
+Visible in commands.c
+Visible in config.c
+Visible in gsserv.c
+Visible in irc.c
+Visible in modules.c
+Visible in modules.h
+Used in AddHook : modules.c
+Used in RemoveHook : modules.c
+
+VARIABLE : OnCNotice [Global]
+Type: EventList* OnCNotice
+Included from: modules.h
+Visible in commands.c
+Visible in config.c
+Visible in gsserv.c
+Visible in irc.c
+Visible in modules.c
+Visible in modules.h
+Used in AddHook : modules.c
+Used in RemoveHook : modules.c
+
+VARIABLE : OnMode [Global]
+Type: EventList* OnMode
+Included from: modules.h
+Visible in commands.c
+Visible in config.c
+Visible in gsserv.c
+Visible in irc.c
+Visible in modules.c
+Visible in modules.h
+Used in AddHook : modules.c
+Used in RemoveHook : modules.c
+
+VARIABLE : OnTopic [Global]
+Type: EventList* OnTopic
+Included from: modules.h
+Visible in commands.c
+Visible in config.c
+Visible in gsserv.c
+Visible in irc.c
+Visible in modules.c
+Visible in modules.h
+Used in AddHook : modules.c
+Used in RemoveHook : modules.c
+
+VARIABLE : Commands [Global]
+Type: CmdList* Commands
+Included from: modules.h
+Visible in commands.c
+Visible in config.c
+Visible in gsserv.c
+Visible in irc.c
+Visible in modules.c
+Visible in modules.h
+Used in AddCommand : modules.c
+Used in RemoveCommand : modules.c
+Used in do_command : commands.c
+
+VARIABLE : botstack [Global]
+<<<
+ Some stack stuff   ??? 
+>>>
+Type: int botstack
+Visible in irc.c
+Used in pushback : irc.c
+Used in readline : irc.c
+
+VARIABLE : topstack [Global]
+<<<
+ Some stack stuff   ??? 
+>>>
+Type: int topstack
+Visible in irc.c
+Used in readline : irc.c
+
+VARIABLE : pushstack [Global]
+<<<
+ ??? 
+>>>
+Type: char pushstack[100][512]
+Visible in irc.c
+Used in pushback : irc.c
+Used in readline : irc.c
+
+FUNCTION : ban [Global]
+<<<
+  Ban a user from the channel
+>>>
+Prototyped in funcs.h
+Type: int ban <<<-- returns 0 on succes and -1 on error>>>
+Arguments: char* nick <<<-- luser to ban>>>
+Calls atoi
+Calls getuserhost : irc.c
+Calls isdigit
+Calls malloc
+Calls mode : irc.c
+Calls sprintf
+Calls strcasecmp
+Calls strlen
+Called from c_ban : commands.c
+Called from c_bankick : commands.c
+Called from c_destroy : commands.c
+Called from c_ldestroy : commands.c
+
+FUNCTION : checkonchannel [Global]
+<<<
+  Check to see if a user is on the channel
+>>>
+Prototyped in funcs.h
+Type: int checkonchannel <<<-- returns: 0 if they are not on channel
+                                 1 if they are
+				 other if they are not on irc>>>
+Arguments: char nick[] <<<-- the user to check for>>>
+Arguments: int userlevel <<<-- ??? (looks like userlevel of the person you want to know about>>>
+Calls parseline : irc.c
+Calls pushback : irc.c
+Calls readline : irc.c
+Calls sprintf
+Calls strcasecmp
+Calls strcmp
+Calls strcpy
+Calls strtok
+Calls writeline : irc.c
+Called from c_add : commands.c
+Called from c_ban : commands.c
+Called from c_bankick : commands.c
+Called from c_bitchslap : commands.c
+Called from c_deop : commands.c
+Called from c_destroy : commands.c
+Called from c_kick : commands.c
+Called from c_ldestroy : commands.c
+Called from c_level : commands.c
+Called from c_mode : commands.c
+Called from c_nick : commands.c
+Called from c_op : commands.c
+Called from c_remove : commands.c
+Called from gotmsgtome : irc.c
+References Variable getpush : gsserv.c
+References Variable mychan : gsserv.c
+
+FUNCTION : connectserver [Global]
+<<<
+  Set up server connection
+>>>
+Prototyped in funcs.h
+Type: int connectserver <<<-- returns -1 on error or socket descripter on success>>>
+Arguments: char* servname <<<-- the server to connect to>>>
+Calls bind
+Calls close
+Calls connect
+Calls gethostbyname
+Calls perror
+Calls socket
+Called from main : gsserv.c
+References Variable DEFAULTPORT : config.c
+References Variable ssock : gsserv.c
+
+FUNCTION : getinfo [Global]
+<<<
+  Get info on a user
+>>>
+Prototyped in funcs.h
+Type: void getinfo
+Arguments: char nick[] <<<-- who to get info on>>>
+Arguments: int* onmychan <<<-- returns a 1 or 0 here if they are on the serv's channel>>>
+Arguments: int* here <<<-- returns a 1 or 0 if they are here or away>>>
+Arguments: int* chanop <<<-- returns a 1 or 0 if they are a channel operator>>>
+Arguments: int* ircop <<<-- returns a 1 or 0 if they are an irc operator>>>
+Arguments: int* gend <<<-- returns a gender code here>>>
+Calls parseline : irc.c
+Calls pushback : irc.c
+Calls readline : irc.c
+Calls sprintf
+Calls strcasecmp
+Calls strcmp
+Calls strcpy
+Calls strtok
+Calls writeline : irc.c
+References Variable getpush : gsserv.c
+References Variable mychan : gsserv.c
+
+FUNCTION : getuserhost [Global]
+<<<
+  Get a user's user@host
+>>>
+Prototyped in funcs.h
+Type: int getuserhost <<<-- returns 0 on success and -1 on error>>>
+Arguments: char* nick <<<-- who to get the info of>>>
+Arguments: char* user <<<-- returns the user name here>>>
+Arguments: char* host <<<-- returns the host here>>>
+Calls parseline : irc.c
+Calls pushback : irc.c
+Calls readline : irc.c
+Calls sprintf
+Calls strcmp
+Calls writeline : irc.c
+Called from ban : irc.c
+Called from c_add : commands.c
+Called from c_level : commands.c
+Called from c_opall : commands.c
+Called from c_remove : commands.c
+Called from gotkick : irc.c
+Called from gotserverop : irc.c
+Called from gotuserop : irc.c
+References Variable getpush : gsserv.c
+
+FUNCTION : gotctcp [Global]
+<<<
+  Handle a CTCP
+>>>
+Prototyped in funcs.h
+Type: void gotctcp
+Arguments: char fromnick[] <<<-- who's it from>>>
+Arguments: char command[] <<<-- what is the CTCP>>>
+Calls sprintf
+Calls strncmp
+Calls writeline : irc.c
+Called from gotmsgtome : irc.c
+References Variable VERSION : config.c
+
+FUNCTION : gotjoin [Global]
+<<<
+  Handle a join on the channel
+>>>
+Prototyped in funcs.h
+Type: int gotjoin <<<-- returns 0 on success and -1 on error>>>
+Arguments: char* fromnick <<<-- who joined>>>
+Arguments: char* fromuser <<<-- what's their username>>>
+Arguments: char* fromhost <<<-- what's their hostname>>>
+Arguments: char* channel <<<-- what channel>>>
+Calls getlevel : userlist.c
+Calls mode : irc.c
+Calls sprintf
+Calls writeline : irc.c
+Called from user2user : irc.c
+References Variable NATEMODE : gsserv.c
+References Variable mychan : gsserv.c
+
+FUNCTION : gotkick [Global]
+<<<
+  Handle a kick on the channel
+>>>
+Prototyped in funcs.h
+Type: int gotkick <<<-- return 0 on succes and -1 on error>>>
+Arguments: char* from <<<-- who did the kicking>>>
+Arguments: char* channel <<<-- what channel>>>
+Arguments: char* who <<<-- who got dat ass beat>>>
+Calls getlevel : userlist.c
+Calls getuserhost : irc.c
+Calls igotkicked : irc.c
+Calls sprintf
+Calls strcasecmp
+Calls writeline : irc.c
+Called from user2user : irc.c
+References Variable flood_ctl : config.c
+References Variable mychan : gsserv.c
+References Variable mynick : gsserv.c
+
+FUNCTION : gotmode [Global]
+<<<
+  Handle a channel mode change
+>>>
+Prototyped in funcs.h
+Type: int gotmode <<<-- returns 0 on success and -1 on error(not possible)>>>
+Arguments: char* from <<<-- who changed it>>>
+Arguments: char* channel <<<-- what channel>>>
+Arguments: char* mode <<<-- what mode>>>
+Calls modedispatch : irc.c
+Called from server2user : irc.c
+Called from user2user : irc.c
+
+FUNCTION : gotmsgtome [Global]
+<<<
+  Handle a message
+>>>
+Prototyped in funcs.h
+Type: int gotmsgtome <<<-- returns 0 on success and -1 on error>>>
+Arguments: char fromnick[] <<<-- who's the message from>>>
+Arguments: char fromuser[] <<<-- what's the person's username>>>
+Arguments: char fromhost[] <<<-- what's the person's hostname>>>
+Arguments: char* msg <<<-- what's the message>>>
+Calls checkonchannel : irc.c
+Calls do_command : commands.c
+Calls getlevel : userlist.c
+Calls gotctcp : irc.c
+Calls notice : irc.c
+Calls sprintf
+Calls strcpy
+Calls strtok
+Called from gotprivmsg : irc.c
+References Variable mynick : gsserv.c
+
+FUNCTION : gotnick [Global]
+<<<
+  handle a nick change
+  BTW, why the fuck would we hear about our OWN nick
+  change from the server?
+>>>
+Prototyped in funcs.h
+Type: int gotnick <<<-- returns 0 on success and -1 on error>>>
+Arguments: char oldnick[] <<<-- the old nick>>>
+Arguments: char newnick[] <<<-- the new nick>>>
+Calls strcasecmp
+Calls strcpy
+Called from user2user : irc.c
+References Variable mynick : gsserv.c
+
+FUNCTION : gotprivmsg [Global]
+<<<
+  Handle a message - determine if it's public or private
+>>>
+Prototyped in funcs.h
+Type: int gotprivmsg <<<-- returns 0 on success and -1 on error>>>
+Arguments: char fromnick[] <<<-- who's it from>>>
+Arguments: char fromuser[] <<<-- what's their username>>>
+Arguments: char fromhost[] <<<-- what's their hostname>>>
+Arguments: char to[] <<<-- who's it to>>>
+Arguments: char msg[] <<<-- what's the message>>>
+Calls dlsym
+Calls gotmsgtome : irc.c
+Calls strcasecmp
+Called from user2user : irc.c
+References Variable OnSay : irc.c
+References Variable mynick : gsserv.c
+
+FUNCTION : gotserverop [Global]
+<<<
+  Check an op by a server to see if it was a possible hack
+>>>
+Prototyped in funcs.h
+Type: void gotserverop
+Arguments: char* nick <<<-- who got op'd>>>
+Arguments: char* from <<<-- what server did it>>>
+Calls getlevel : userlist.c
+Calls getuserhost : irc.c
+Calls mode : irc.c
+Calls sprintf
+Called from modedispatch : irc.c
+References Variable flood_ctl : config.c
+
+FUNCTION : gotuserop [Global]
+<<<
+  Check an op done by a user
+>>>
+Prototyped in funcs.h
+Type: void gotuserop
+Arguments: char* nick <<<-- who got op'd>>>
+Arguments: char* from <<<-- who did it>>>
+Calls getlevel : userlist.c
+Calls getuserhost : irc.c
+Calls mode : irc.c
+Calls sprintf
+Called from modedispatch : irc.c
+References Variable flood_ctl : config.c
+
+FUNCTION : igotkicked [Global]
+<<<
+  Handle getting kicked off the channel
+>>>
+Prototyped in funcs.h
+Type: int igotkicked <<<-- returns 0 on success and -1 on error>>>
+Arguments: char from[] <<<-- who kicked me>>>
+Arguments: char channel[] <<<-- what channel did I get kicked from>>>
+Calls join : irc.c
+Calls notice : irc.c
+Called from gotkick : irc.c
+
+FUNCTION : join [Global]
+<<<
+  Join a channel
+>>>
+Prototyped in funcs.h
+Type: int join <<<-- returns 0 on success and -1 on error>>>
+Arguments: char* channame <<<-- name of the channel to join>>>
+Calls sprintf
+Calls strcpy
+Calls writeline : irc.c
+Called from c_goto : commands.c
+Called from c_join : commands.c
+Called from igotkicked : irc.c
+Called from main : gsserv.c
+References Variable mychan : gsserv.c
+
+FUNCTION : kick [Global]
+<<<
+  Kick a luser off the channel
+>>>
+Prototyped in funcs.h
+Type: int kick <<<-- returns 0 on success and -1 on error>>>
+Arguments: char* nick <<<-- luser to kick>>>
+Arguments: char* reason <<<-- the comment for it>>>
+Calls sprintf
+Calls writeline : irc.c
+Called from c_bankick : commands.c
+Called from c_bitchslap : commands.c
+Called from c_destroy : commands.c
+Called from c_kick : commands.c
+Called from c_ldestroy : commands.c
+References Variable mychan : gsserv.c
+
+FUNCTION : lservermsg [Global]
+<<<
+  Process a server message
+>>>
+Prototyped in funcs.h
+Type: int lservermsg <<<-- returns 0 on success and -1 on error>>>
+Arguments: char command[] <<<-- message to process>>>
+Arguments: char args[] <<<-- any arguments to the message>>>
+Calls free
+Calls malloc
+Calls pong : irc.c
+Calls strcmp
+Called from waitforstuff : gsserv.c
+
+FUNCTION : mode [Global]
+<<<
+  Do a mode change
+>>>
+Prototyped in funcs.h
+Type: int mode <<<-- returns 0 on success and -1 on error>>>
+Arguments: char* mode <<<-- mode to effect>>>
+Calls sprintf
+Calls writeline : irc.c
+Called from ban : irc.c
+Called from c_deop : commands.c
+Called from c_mode : commands.c
+Called from c_op : commands.c
+Called from c_opall : commands.c
+Called from gotjoin : irc.c
+Called from gotserverop : irc.c
+Called from gotuserop : irc.c
+References Variable flood_ctl : config.c
+References Variable mychan : gsserv.c
+
+FUNCTION : modedispatch [Global]
+<<<
+  Check to see if a mode change came from a server
+>>>
+Prototyped in funcs.h
+Type: void modedispatch
+Arguments: char* from <<<-- who'd it come from>>>
+Arguments: char* nick <<<-- who got affected>>>
+Calls gotserverop : irc.c
+Calls gotuserop : irc.c
+Calls strchr
+Called from gotmode : irc.c
+
+FUNCTION : msg [Global]
+<<<
+  Send someone a message
+>>>
+Prototyped in funcs.h
+Type: int msg <<<-- returns 0 on success and -1 on error>>>
+Arguments: char* to <<<-- who to send the message to>>>
+Arguments: char* msg <<<-- what message>>>
+Calls sprintf
+Calls writeline : irc.c
+
+FUNCTION : nick [Global]
+<<<
+  Change nick
+>>>
+Prototyped in funcs.h
+Type: int nick <<<-- returns 0 on succes and -1 on error>>>
+Arguments: char* nickname <<<-- nick to change to>>>
+Calls sprintf
+Calls strcpy
+Calls writeline : irc.c
+Called from main : gsserv.c
+References Variable mynick : gsserv.c
+
+FUNCTION : notice [Global]
+<<<
+  Send a notice to the channel/a person
+>>>
+Prototyped in funcs.h
+Type: int notice <<<-- returns 0 on success and -1 on error>>>
+Arguments: char* to <<<-- who to send the notice to>>>
+Arguments: char* msg <<<-- the notice>>>
+Calls sprintf
+Calls writeline : irc.c
+Called from c_add : commands.c
+Called from c_addex : commands.c
+Called from c_ban : commands.c
+Called from c_bankick : commands.c
+Called from c_bitchslap : commands.c
+Called from c_deop : commands.c
+Called from c_destroy : commands.c
+Called from c_goto : commands.c
+Called from c_help : commands.c
+Called from c_info : commands.c
+Called from c_invade : commands.c
+Called from c_invadem : commands.c
+Called from c_invadet : commands.c
+Called from c_kick : commands.c
+Called from c_ldestroy : commands.c
+Called from c_level : commands.c
+Called from c_list : commands.c
+Called from c_me : commands.c
+Called from c_mode : commands.c
+Called from c_msg : commands.c
+Called from c_natemode : commands.c
+Called from c_nick : commands.c
+Called from c_op : commands.c
+Called from c_remove : commands.c
+Called from c_say : commands.c
+Called from c_status : commands.c
+Called from c_topic : commands.c
+Called from c_werd : commands.c
+Called from c_writefile : commands.c
+Called from gotmsgtome : irc.c
+Called from igotkicked : irc.c
+Called from printhelp : help.c
+
+FUNCTION : parseline [Global]
+<<<
+  Parse an incoming line into it components
+>>>
+Prototyped in funcs.h
+Type: int parseline <<<-- returns the type of message>>>
+Arguments: char* line <<<-- line to be parsed>>>
+Arguments: char* command <<<-- returns the command here>>>
+Arguments: char* from <<<-- returns who it is from here>>>
+Arguments: char* code <<<-- returns the code here>>>
+Arguments: char* to <<<-- returns who it is to or affecting>>>
+Arguments: char* args <<<-- any arguments are returned here>>>
+Calls index
+Calls strcpy
+Calls strtok
+Called from checkonchannel : irc.c
+Called from getinfo : irc.c
+Called from getuserhost : irc.c
+Called from waitforstuff : gsserv.c
+
+FUNCTION : part [Global]
+<<<
+  Leave a channel
+>>>
+Prototyped in funcs.h
+Type: int part <<<-- returns 0 on success and -1 on error>>>
+Arguments: char* channame <<<-- channel to leave>>>
+Calls sprintf
+Calls writeline : irc.c
+Called from c_join : commands.c
+
+FUNCTION : pong [Global]
+<<<
+  Pong the server
+>>>
+Prototyped in funcs.h
+Type: int pong <<<-- returns 0 on success and -1 on error>>>
+Arguments: char* servname <<<-- the server to pong>>>
+Calls fflush
+Calls sprintf
+Calls writeline : irc.c
+Called from lservermsg : irc.c
+References Variable mynick : gsserv.c
+
+FUNCTION : pushback [Global]
+<<<
+  Beat the fuck out of Kevin, but I believe it puts a line "back"
+  to be read again latter
+>>>
+Prototyped in funcs.h
+Type: void pushback
+Arguments: char* line <<<-- The line to be put back>>>
+Calls strcpy
+Called from checkonchannel : irc.c
+Called from getinfo : irc.c
+Called from getuserhost : irc.c
+References Variable botstack : irc.c
+References Variable pushstack : irc.c
+
+FUNCTION : quit [Global]
+<<<
+  I Kwitz!
+>>>
+Prototyped in funcs.h
+Type: int quit <<<-- returns 0 on success and -1 on error>>>
+Arguments: char* from <<<-- who sent the quit>>>
+Calls sprintf
+Calls writeline : irc.c
+Called from c_shutdown : commands.c
+References Variable quitflag : gsserv.c
+
+FUNCTION : readline [Global]
+<<<
+  Read a line from the server
+>>>
+Prototyped in funcs.h
+Type: int readline <<<-- returns 0 on success, -1 on error>>>
+Arguments: char* line <<<-- The line read is placed here>>>
+Calls read
+Calls strcpy
+Called from c_opall : commands.c
+Called from checkonchannel : irc.c
+Called from getinfo : irc.c
+Called from getuserhost : irc.c
+Called from main : gsserv.c
+Called from waitforstuff : gsserv.c
+References Variable botstack : irc.c
+References Variable getpush : gsserv.c
+References Variable pushstack : irc.c
+References Variable ssock : gsserv.c
+References Variable topstack : irc.c
+
+FUNCTION : say [Global]
+<<<
+  Say something on the channel
+>>>
+Prototyped in funcs.h
+Type: int say <<<-- returns 0 on success and -1 on error>>>
+Arguments: char* msg <<<-- what to say>>>
+Calls sprintf
+Calls writeline : irc.c
+
+FUNCTION : server2user [Global]
+<<<
+  Parse a server action and handle it
+>>>
+Prototyped in funcs.h
+Type: int server2user <<<-- return 0 on success and -1 on error>>>
+Arguments: char code[] <<<-- what sort of action>>>
+Arguments: char from[] <<<-- who did it>>>
+Arguments: char to[] <<<-- who had it done on them>>>
+Arguments: char args[] <<<-- any arguments>>>
+Calls gotmode : irc.c
+Calls strcmp
+Called from waitforstuff : gsserv.c
+
+FUNCTION : user2user [Global]
+<<<
+  Parse an event and handle it
+>>>
+Prototyped in funcs.h
+Type: int user2user <<<-- returns 0 on success and -1 on error>>>
+Arguments: char command[] <<<-- command that was done>>>
+Arguments: char from[] <<<-- who did it>>>
+Arguments: char to[] <<<-- who got it done to>>>
+Arguments: char args[] <<<-- any arguments>>>
+Calls gotjoin : irc.c
+Calls gotkick : irc.c
+Calls gotmode : irc.c
+Calls gotnick : irc.c
+Calls gotprivmsg : irc.c
+Calls strcmp
+Calls strcpy
+Calls strtok
+Called from waitforstuff : gsserv.c
+
+FUNCTION : writeline [Global]
+<<<
+  Write a single line using flood control (if desired)
+>>>
+Prototyped in funcs.h
+Type: void writeline
+Arguments: char* line <<<-- The line to write>>>
+Calls localtime
+Calls malloc
+Calls strlen
+Calls time
+Calls write
+Called from c_bitchslap : commands.c
+Called from c_destroy : commands.c
+Called from c_dream : commands.c
+Called from c_haywood : commands.c
+Called from c_invade : commands.c
+Called from c_invadem : commands.c
+Called from c_invadet : commands.c
+Called from c_jimmy : commands.c
+Called from c_ldestroy : commands.c
+Called from c_me : commands.c
+Called from c_msg : commands.c
+Called from c_nick : commands.c
+Called from c_opall : commands.c
+Called from c_quote : commands.c
+Called from c_say : commands.c
+Called from c_sex : commands.c
+Called from c_topic : commands.c
+Called from c_wzo : commands.c
+Called from checkonchannel : irc.c
+Called from getinfo : irc.c
+Called from getuserhost : irc.c
+Called from gotctcp : irc.c
+Called from gotjoin : irc.c
+Called from gotkick : irc.c
+Called from gotsignal : gsserv.c
+Called from gotsignal2 : gsserv.c
+Called from join : irc.c
+Called from kick : irc.c
+Called from main : gsserv.c
+Called from mode : irc.c
+Called from msg : irc.c
+Called from nick : irc.c
+Called from notice : irc.c
+Called from part : irc.c
+Called from pong : irc.c
+Called from quit : irc.c
+Called from say : irc.c
+References Variable flood_ctl : config.c
+References Variable ssock : gsserv.c
+----------------------------------------
+
+----------------------------------------
+FILE : 'modules.c'
+<<<
+  $Header: /dorks/tdo/cvsroot/gsserv-5.1/src/Attic/modules.c,v 1.1.2.3 1998/08/02 22:36:38 tdo Exp $
+
+  MODULES.C
+
+  This file has AddHook() and like functions
+>>>
+
+INCLUDES : 'modules.h' [Local file]
+   INCLUDES : 'dlfcn.h' [System file]
+   INCLUDES : 'mods-common.h' [Local file]
+
+VARIABLE : OnJoin [Global]
+<<<
+ Add's a hook to the given event   Remove's a hook   Add's a command   Remove's a command 
+>>>
+Type: EventList* OnJoin
+Included from: modules.h
+Visible in commands.c
+Visible in config.c
+Visible in gsserv.c
+Visible in irc.c
+Visible in modules.c
+Visible in modules.h
+Used in AddHook : modules.c
+Used in RemoveHook : modules.c
+
+VARIABLE : OnLeave [Global]
+Type: EventList* OnLeave
+Included from: modules.h
+Visible in commands.c
+Visible in config.c
+Visible in gsserv.c
+Visible in irc.c
+Visible in modules.c
+Visible in modules.h
+Used in AddHook : modules.c
+Used in RemoveHook : modules.c
+
+VARIABLE : OnQuit [Global]
+Type: EventList* OnQuit
+Included from: modules.h
+Visible in commands.c
+Visible in config.c
+Visible in gsserv.c
+Visible in irc.c
+Visible in modules.c
+Visible in modules.h
+Used in AddHook : modules.c
+Used in RemoveHook : modules.c
+
+VARIABLE : OnKick [Global]
+Type: EventList* OnKick
+Included from: modules.h
+Visible in commands.c
+Visible in config.c
+Visible in gsserv.c
+Visible in irc.c
+Visible in modules.c
+Visible in modules.h
+Used in AddHook : modules.c
+Used in RemoveHook : modules.c
+
+VARIABLE : OnSay [Global]
+Type: EventList* OnSay
+Included from: modules.h
+Visible in commands.c
+Visible in config.c
+Visible in gsserv.c
+Visible in irc.c
+Visible in modules.c
+Visible in modules.h
+Used in AddHook : modules.c
+Used in RemoveHook : modules.c
+Used in gotprivmsg : irc.c
+
+VARIABLE : OnMe [Global]
+Type: EventList* OnMe
+Included from: modules.h
+Visible in commands.c
+Visible in config.c
+Visible in gsserv.c
+Visible in irc.c
+Visible in modules.c
+Visible in modules.h
+Used in AddHook : modules.c
+Used in RemoveHook : modules.c
+
+VARIABLE : OnNotice [Global]
+Type: EventList* OnNotice
+Included from: modules.h
+Visible in commands.c
+Visible in config.c
+Visible in gsserv.c
+Visible in irc.c
+Visible in modules.c
+Visible in modules.h
+Used in AddHook : modules.c
+Used in RemoveHook : modules.c
+
+VARIABLE : OnCNotice [Global]
+Type: EventList* OnCNotice
+Included from: modules.h
+Visible in commands.c
+Visible in config.c
+Visible in gsserv.c
+Visible in irc.c
+Visible in modules.c
+Visible in modules.h
+Used in AddHook : modules.c
+Used in RemoveHook : modules.c
+
+VARIABLE : OnMode [Global]
+Type: EventList* OnMode
+Included from: modules.h
+Visible in commands.c
+Visible in config.c
+Visible in gsserv.c
+Visible in irc.c
+Visible in modules.c
+Visible in modules.h
+Used in AddHook : modules.c
+Used in RemoveHook : modules.c
+
+VARIABLE : OnTopic [Global]
+Type: EventList* OnTopic
+Included from: modules.h
+Visible in commands.c
+Visible in config.c
+Visible in gsserv.c
+Visible in irc.c
+Visible in modules.c
+Visible in modules.h
+Used in AddHook : modules.c
+Used in RemoveHook : modules.c
+
+VARIABLE : Commands [Global]
+Type: CmdList* Commands
+Included from: modules.h
+Visible in commands.c
+Visible in config.c
+Visible in gsserv.c
+Visible in irc.c
+Visible in modules.c
+Visible in modules.h
+Used in AddCommand : modules.c
+Used in RemoveCommand : modules.c
+Used in do_command : commands.c
+
+FUNCTION : AddCommand [Global]
+Prototyped in modules.h
+Type: int AddCommand
+Arguments: void* id
+Arguments: char* cmd
+Arguments: char* func
+Arguments: int level
+Calls malloc
+References Variable Commands : modules.c
+
+FUNCTION : AddHook [Global]
+Prototyped in modules.h
+Type: int AddHook
+Arguments: int event
+Arguments: void* id
+Arguments: char* func
+Calls malloc
+References Variable OnCNotice : modules.c
+References Variable OnJoin : modules.c
+References Variable OnKick : modules.c
+References Variable OnLeave : modules.c
+References Variable OnMe : modules.c
+References Variable OnMode : modules.c
+References Variable OnNotice : modules.c
+References Variable OnQuit : modules.c
+References Variable OnSay : modules.c
+References Variable OnTopic : modules.c
+
+FUNCTION : RemoveCommand [Global]
+Prototyped in modules.h
+Type: int RemoveCommand
+Arguments: void* id
+Arguments: char* cmd
+Calls free
+Calls strcmp
+References Variable Commands : modules.c
+
+FUNCTION : RemoveHook [Global]
+Prototyped in modules.h
+Type: int RemoveHook
+Arguments: int event
+Arguments: void* id
+Arguments: char* func
+Calls free
+Calls strcmp
+References Variable OnCNotice : modules.c
+References Variable OnJoin : modules.c
+References Variable OnKick : modules.c
+References Variable OnLeave : modules.c
+References Variable OnMe : modules.c
+References Variable OnMode : modules.c
+References Variable OnNotice : modules.c
+References Variable OnQuit : modules.c
+References Variable OnSay : modules.c
+References Variable OnTopic : modules.c
+----------------------------------------
+
+----------------------------------------
+FILE : 'userlist.c'
+<<<
+  $Header: /dorks/tdo/cvsroot/gsserv-5.1/src/userlist.c,v 1.1.1.1.2.11 1998/07/14 18:18:07 tdo Exp $
+
+  USERLIST.C
+
+  functions for handling the user list (duh)
+>>>
+
+INCLUDES : 'gsserv.h' [Local file]
+
+INCLUDES : 'funcs.h' [Local file]
+
+INCLUDES : 'config.h' [Local file]
+
+INCLUDES : 'stdio.h' [System file]
+
+DEFINES : 'INC_USERLIST_C' 
+<<<
+ so the headers know who included them 
+>>>
+
+VARIABLE : mynick [External from header file]
+<<<
+ The pushback stack???   GSServ's nick 
+>>>
+Type: char mynick[10]
+
+VARIABLE : mychan [External from header file]
+<<<
+ The channel it will join 
+>>>
+Type: char mychan[50]
+
+VARIABLE : ssock [External from header file]
+<<<
+ The socket descriptor 
+>>>
+Type: int ssock
+
+VARIABLE : getpush [External from header file]
+<<<
+ ??? 
+>>>
+Type: int getpush
+
+VARIABLE : quitflag [External from header file]
+<<<
+ Should GSServ quit 
+>>>
+Type: int quitflag
+
+VARIABLE : NATEMODE [External from header file]
+<<<
+ NATEMODE flag 
+>>>
+Type: int NATEMODE
+
+VARIABLE : starttime [External from header file]
+<<<
+ The time GSServ was started up 
+>>>
+Type: long starttime
+
+VARIABLE : signame [External from header file]
+<<<
+ The quit messages for the different signals 
+>>>
+Type: char* signame[]
+
+VARIABLE : DEFAULTNICK [External from header file]
+<<<
+ are we including from config.c?   GSServ's nick 
+>>>
+Type: char DEFAULTNICK[10]
+
+VARIABLE : LOGINNAME [External from header file]
+<<<
+ GSServ's username 
+>>>
+Type: char LOGINNAME[9]
+
+VARIABLE : IRCUSER [External from header file]
+<<<
+ Gecos stuff 
+>>>
+Type: char IRCUSER[1024]
+
+VARIABLE : VERSION [External from header file]
+<<<
+ version string 
+>>>
+Type: char VERSION[1024]
+
+VARIABLE : DEFAULTSERVER [External from header file]
+<<<
+ server to connect to 
+>>>
+Type: char DEFAULTSERVER[1024]
+
+VARIABLE : HOMECHAN [External from header file]
+<<<
+ The channel to connect to 
+>>>
+Type: char HOMECHAN[1024]
+
+VARIABLE : USERFILE [External from header file]
+<<<
+ where's the user file 
+>>>
+Type: char USERFILE[1024]
+
+VARIABLE : HELPDIR [External from header file]
+<<<
+ where's the help dir 
+>>>
+Type: char HELPDIR[1024]
+
+VARIABLE : DEFAULTDIR [External from header file]
+<<<
+ the default directory to look in for help and userfile
+>>>
+Type: char DEFAULTDIR[1024]
+
+VARIABLE : DEFAULTPORT [External from header file]
+<<<
+ the default port to connect to on the server 
+>>>
+Type: int DEFAULTPORT
+
+VARIABLE : flood_ctl [External from header file]
+<<<
+ flood control 
+>>>
+Type: int flood_ctl
+
+VARIABLE : DIRTYUFILE [External from header file]
+<<<
+ For adding new users at run time 
+>>>
+Type: int DIRTYUFILE
+
+VARIABLE : head [Global]
+<<<
+ the linked list data   The head of the linked list 
+>>>
+Type: LIST* head
+Visible in commands.c
+Visible in userlist.c
+Used in addentry : userlist.c
+Used in c_remove : commands.c
+Used in c_status : commands.c
+Used in checkufile : userlist.c
+Used in getlevel : userlist.c
+Used in readusers : userlist.c
+
+FUNCTION : addentry [Global]
+<<<
+  Add an entry to the userlist
+>>>
+Prototyped in funcs.h
+Type: void addentry
+Arguments: char* nick <<<-- The user's standard nick>>>
+Arguments: char* uname <<<-- username>>>
+Arguments: char* hname <<<-- hostname>>>
+Arguments: int level <<<-- level to have>>>
+Arguments: int gender <<<-- gender>>>
+Calls exit
+Calls malloc
+Calls perror
+Calls strcmp
+Calls strcpy
+Called from c_addex : commands.c
+Called from readusers : userlist.c
+References Variable DIRTYUFILE : config.c
+References Variable head : userlist.c
+
+FUNCTION : checkufile [Global]
+Prototyped in funcs.h
+Type: void checkufile
+Arguments: void
+Calls exit
+Calls fclose
+Calls fflush
+Calls fopen
+Calls fprintf
+Calls perror
+Calls strlen
+Called from c_writefile : commands.c
+Called from gotsignal : gsserv.c
+Called from gotsignal2 : gsserv.c
+Called from main : gsserv.c
+References Variable DIRTYUFILE : config.c
+References Variable USERFILE : config.c
+References Variable head : userlist.c
+
+FUNCTION : getlevel [Global]
+<<<
+  Check the user's level
+>>>
+Prototyped in funcs.h
+Type: int getlevel <<<-- returns their level>>>
+Arguments: char* fromnick <<<-- requester's nick>>>
+Arguments: char* fromuser <<<-- requester's username>>>
+Arguments: char* fromhost <<<-- requester's hostname>>>
+Arguments: int* gend <<<-- returns the gender here>>>
+Calls re_comp
+Calls re_exec
+Calls strcasecmp
+Calls strcmp
+Calls to_lower : gsserv.c
+Called from c_level : commands.c
+Called from c_opall : commands.c
+Called from gotjoin : irc.c
+Called from gotkick : irc.c
+Called from gotmsgtome : irc.c
+Called from gotserverop : irc.c
+Called from gotuserop : irc.c
+References Variable head : userlist.c
+
+FUNCTION : readusers [Global]
+<<<
+  Read the user list from the users file
+>>>
+Prototyped in funcs.h
+Type: void readusers
+Arguments: void
+Calls addentry : userlist.c
+Calls exit
+Calls fclose
+Calls fopen
+Calls free
+Calls fscanf
+Calls perror
+Calls strcat
+Calls strcpy
+Calls strncat
+Calls strncpy
+Called from c_reload : commands.c
+Called from main : gsserv.c
+References Variable DEFAULTDIR : config.c
+References Variable DIRTYUFILE : config.c
+References Variable USERFILE : config.c
+References Variable head : userlist.c
+----------------------------------------
+
+----------------------------------------
+FILE : 'commands.h'
+<<<
+  $Header: /dorks/tdo/cvsroot/gsserv-5.1/src/commands.h,v 1.1.1.1.2.1 1998/07/12 22:28:31 tdo Exp $
+
+  COMMANDS.H
+
+  Has the COMMAND structure and the haywoods (for some reason)
+>>>
+Included in commands.c
+
+DEFINES : 'COMMANDS_H' 
+<<<
+ To stop multiple inclusions. 
+>>>
+
+DEFINES : 'NUM_HAYWOODS' = 8
+<<<
+ How many haywood sayings are there 
+>>>
+
+TYPEDEF : 'COMMAND'
+<<<
+ The command structure, each command entry has one 
+>>>
+Type: struct command_t COMMAND
+struct command_t
+  {
+   char cmdname[40]; <<< The name of the command >>>
+   int minlevel; <<< The minimum level need to use >>>
+   void (*func)(char fromnick[],int level,char arg[],int gend); <<< function pointer, points to the function to call >>>
+  }
+
+VARIABLE : jablowme [Global]
+<<<
+ The Haywood sayings 
+>>>
+Type: char* jablowme[]
+Visible in commands.c
+Visible in commands.h
+Used in c_haywood : commands.c
+----------------------------------------
+
+----------------------------------------
+FILE : 'config.h'
+<<<
+  $Header: /dorks/tdo/cvsroot/gsserv-5.1/src/config.h,v 1.1.1.1.2.3 1998/07/13 05:09:02 tdo Exp $
+
+  CONFIG.H
+
+  The global configuration var's and stuff
+>>>
+Included in commands.c
+Included in config.c
+Included in gsserv.c
+Included in irc.c
+Included in userlist.c
+
+DEFINES : 'EXTERN' = extern
+<<<
+ are we including from config.c? 
+>>>
+
+VARIABLE : DEFAULTNICK [External]
+<<<
+ GSServ's nick 
+>>>
+Type: char DEFAULTNICK[10]
+Declared global in 'config.c'
+
+VARIABLE : LOGINNAME [External]
+<<<
+ GSServ's username 
+>>>
+Type: char LOGINNAME[9]
+Declared global in 'config.c'
+
+VARIABLE : IRCUSER [External]
+<<<
+ Gecos stuff 
+>>>
+Type: char IRCUSER[MAX_STR_LEN]
+Declared global in 'config.c'
+
+VARIABLE : VERSION [External]
+<<<
+ version string 
+>>>
+Type: char VERSION[MAX_STR_LEN]
+Declared global in 'config.c'
+
+VARIABLE : DEFAULTSERVER [External]
+<<<
+ server to connect to 
+>>>
+Type: char DEFAULTSERVER[MAX_STR_LEN]
+Declared global in 'config.c'
+
+VARIABLE : HOMECHAN [External]
+<<<
+ The channel to connect to 
+>>>
+Type: char HOMECHAN[MAX_STR_LEN]
+Declared global in 'config.c'
+
+VARIABLE : USERFILE [External]
+<<<
+ where's the user file 
+>>>
+Type: char USERFILE[MAX_PATH_LEN]
+Declared global in 'config.c'
+
+VARIABLE : HELPDIR [External]
+<<<
+ where's the help dir 
+>>>
+Type: char HELPDIR[MAX_PATH_LEN]
+Declared global in 'config.c'
+
+VARIABLE : DEFAULTDIR [External]
+<<<
+ the default directory to look in for help and userfile
+>>>
+Type: char DEFAULTDIR[MAX_PATH_LEN]
+Declared global in 'config.c'
+
+VARIABLE : DEFAULTPORT [External]
+<<<
+ the default port to connect to on the server 
+>>>
+Type: int DEFAULTPORT
+Declared global in 'config.c'
+
+VARIABLE : flood_ctl [External]
+<<<
+ flood control 
+>>>
+Type: int flood_ctl
+Declared global in 'config.c'
+
+VARIABLE : DIRTYUFILE [External]
+<<<
+ For adding new users at run time 
+>>>
+Type: int DIRTYUFILE
+Declared global in 'config.c'
+----------------------------------------
+
+----------------------------------------
+FILE : 'funcs.h'
+<<<
+  $Header: /dorks/tdo/cvsroot/gsserv-5.1/src/funcs.h,v 1.1.1.1.2.7 1998/08/02 05:46:22 tdo Exp $
+
+  FUNCS.H
+
+  The function declaration for most of the functions used in GSServ
+>>>
+Included in commands.c
+Included in config.c
+Included in gsserv.c
+Included in help.c
+Included in irc.c
+Included in mods.h
+Included in userlist.c
+
+TYPEDEF : 'SIGCONTEXT'
+<<<
+ weird shit for sigcontext 
+>>>
+Type: struct sigcontext SIGCONTEXT
+----------------------------------------
+
+----------------------------------------
+FILE : 'gsserv.h'
+<<<
+  $Header: /dorks/tdo/cvsroot/gsserv-5.1/src/gsserv.h,v 1.1.1.1.2.6 1998/07/17 07:17:15 tdo Exp $
+
+  GSSERV.H
+
+  Has some globals like nick and channel
+  also has the signal quit messages
+>>>
+Included in commands.c
+Included in config.c
+Included in gsserv.c
+Included in help.c
+Included in irc.c
+Included in mods.h
+Included in userlist.c
+
+DEFINES : 'EXTERN' = extern
+
+DEFINES : 'STACKSIZE' = 100
+<<<
+ It is running on SunOS 4 or less 
+>>>
+
+DEFINES : 'MAX_PATH_LEN' = 1024
+<<<
+ should prob'ly be changed to system values 
+>>>
+
+DEFINES : 'MAX_STR_LEN' = 1024
+<<<
+ maximum length a string can be 
+>>>
+
+DEFINES : 'CONFIG_FILE' = "/usr/local/lib/irc/bots/gsserv/gsserv-5.1/data"
+<<<
+ Default location for the config file 
+>>>
+
+TYPEDEF : 'LIST'
+<<<
+ The user list structure 
+>>>
+Type: struct list_t LIST
+struct list_t
+  {
+   struct list_t* next; <<< next element in the list >>>
+   char nick[10]; <<< the user's standard nick >>>
+   char uname[50]; <<< the username >>>
+   char hname[100]; <<< the hostname >>>
+   int level; <<< their level >>>
+   int gender; <<< their gender >>>
+  }
+
+VARIABLE : mynick [External]
+<<<
+ GSServ's nick 
+>>>
+Type: char mynick[10]
+Declared global in 'gsserv.c'
+
+VARIABLE : mychan [External]
+<<<
+ The channel it will join 
+>>>
+Type: char mychan[50]
+Declared global in 'gsserv.c'
+
+VARIABLE : ssock [External]
+<<<
+ The socket descriptor 
+>>>
+Type: int ssock
+Declared global in 'gsserv.c'
+
+VARIABLE : getpush [External]
+<<<
+ ??? 
+>>>
+Type: int getpush
+Declared global in 'gsserv.c'
+
+VARIABLE : quitflag [External]
+<<<
+ Should GSServ quit 
+>>>
+Type: int quitflag
+Declared global in 'gsserv.c'
+
+VARIABLE : NATEMODE [External]
+<<<
+ NATEMODE flag 
+>>>
+Type: int NATEMODE
+Declared global in 'gsserv.c'
+
+VARIABLE : starttime [External]
+<<<
+ The time GSServ was started up 
+>>>
+Type: long starttime
+Declared global in 'gsserv.c'
+
+VARIABLE : signame [External]
+<<<
+ The quit messages for the different signals 
+>>>
+Type: char* signame[]
+Declared global in 'gsserv.c'
+----------------------------------------
+
+----------------------------------------
+FILE : 'mods-common.h'
+<<<
+  $Header: /dorks/tdo/cvsroot/gsserv-5.1/src/Attic/mods-common.h,v 1.1.2.2 1998/08/06 06:23:31 tdo Exp $
+
+  MODS-COMMON.H
+
+  Stuff that is included in modules and GSServ
+>>>
+Included in mods.h
+Included in modules.h
+
+DEFINES : 'MODS_COMMON_H' 
+<<<
+ To stop multiple inclusions. 
+>>>
+
+DEFINES : 'ON_JOIN' = 1
+<<<
+ When someone joins 
+>>>
+
+DEFINES : 'ON_LEAVE' = 2
+<<<
+ When someone leaves 
+>>>
+
+DEFINES : 'ON_QUIT' = 3
+<<<
+ When someone quits 
+>>>
+
+DEFINES : 'ON_KICK' = 4
+<<<
+ When someone was kicked 
+>>>
+
+DEFINES : 'ON_SAY' = 5
+<<<
+ When someone says something 
+>>>
+
+DEFINES : 'ON_ME' = 6
+<<<
+ When someone me's something 
+>>>
+
+DEFINES : 'ON_NOTICE' = 7
+<<<
+ When someone notices something 
+>>>
+
+DEFINES : 'ON_CNOTICE' = 8
+<<<
+ When someone notices something to the channel 
+>>>
+
+DEFINES : 'ON_MODE' = 9
+<<<
+ When the mode is changed 
+>>>
+
+DEFINES : 'ON_TOPIC' = 10
+<<<
+ When the topic is changed 
+>>>
+----------------------------------------
+
+----------------------------------------
+FILE : 'mods.h'
+<<<
+  $Header: /dorks/tdo/cvsroot/gsserv-5.1/src/Attic/mods.h,v 1.1.2.6 1998/08/06 06:23:31 tdo Exp $
+
+  MODS.h
+
+  Header file for modules to include
+>>>
+
+INCLUDES : 'mods-common.h' [Local file]
+
+INCLUDES : 'gsserv.h' [Local file]
+
+INCLUDES : 'funcs.h' [Local file]
+
+INCLUDES : 'stdio.h' [System file]
+
+INCLUDES : 'dlfcn.h' [System file]
+
+DEFINES : 'MODS_H' 
+<<<
+ To stop multiple inclusions. 
+>>>
+
+VARIABLE : mynick [External from header file]
+<<<
+ The pushback stack???   GSServ's nick 
+>>>
+Type: char mynick[10]
+
+VARIABLE : mychan [External from header file]
+<<<
+ The channel it will join 
+>>>
+Type: char mychan[50]
+
+VARIABLE : ssock [External from header file]
+<<<
+ The socket descriptor 
+>>>
+Type: int ssock
+
+VARIABLE : getpush [External from header file]
+<<<
+ ??? 
+>>>
+Type: int getpush
+
+VARIABLE : quitflag [External from header file]
+<<<
+ Should GSServ quit 
+>>>
+Type: int quitflag
+
+VARIABLE : NATEMODE [External from header file]
+<<<
+ NATEMODE flag 
+>>>
+Type: int NATEMODE
+
+VARIABLE : starttime [External from header file]
+<<<
+ The time GSServ was started up 
+>>>
+Type: long starttime
+
+VARIABLE : signame [External from header file]
+<<<
+ The quit messages for the different signals 
+>>>
+Type: char* signame[]
+
+VARIABLE : ModErrStr [Global]
+<<<
+ Error string to return to user 
+>>>
+Type: char* ModErrStr
+Visible in mods.h
+
+VARIABLE : ModInfoStr [Global]
+<<<
+ Info String, like the name of the
+				    module and version 
+>>>
+Type: char* ModInfoStr
+Visible in mods.h
+
+VARIABLE : ModByStr [Global]
+<<<
+ Whodunit? 
+>>>
+Type: char* ModByStr
+Visible in mods.h
+----------------------------------------
+
+----------------------------------------
+FILE : 'modules.h'
+<<<
+  $Header: /dorks/tdo/cvsroot/gsserv-5.1/src/Attic/modules.h,v 1.1.2.5 1998/08/06 06:23:31 tdo Exp $
+
+  MODULES.H
+
+  This file just has some declarations
+>>>
+Included in commands.c
+Included in config.c
+Included in gsserv.c
+Included in irc.c
+Included in modules.c
+
+INCLUDES : 'dlfcn.h' [System file]
+<<<
+ for dlopen and the like 
+>>>
+
+INCLUDES : 'mods-common.h' [Local file]
+<<<
+ for the #define ON_*'s 
+>>>
+
+DEFINES : 'MODULES_H' 
+<<<
+ To stop multiple inclusions. 
+>>>
+
+TYPEDEF : 'EventList'
+<<<
+ Add's a hook to the given event   Remove's a hook   Add's a command   Remove's a command 
+>>>
+Type: struct event_list EventList
+struct event_list
+  {
+   void* id;
+   char* func;
+   struct event_list* prev;
+   struct event_list* next;
+  }
+
+TYPEDEF : 'CmdList'
+Type: struct cmd_list CmdList
+struct cmd_list
+  {
+   void* id;
+   int level;
+   char* cmd;
+   char* func;
+   struct event_list* prev;
+   struct event_list* next;
+  }
+
+VARIABLE : OnJoin [Global]
+Type: EventList* OnJoin
+Visible in commands.c
+Visible in config.c
+Visible in gsserv.c
+Visible in irc.c
+Visible in modules.c
+Visible in modules.h
+Used in AddHook : modules.c
+Used in RemoveHook : modules.c
+
+VARIABLE : OnLeave [Global]
+Type: EventList* OnLeave
+Visible in commands.c
+Visible in config.c
+Visible in gsserv.c
+Visible in irc.c
+Visible in modules.c
+Visible in modules.h
+Used in AddHook : modules.c
+Used in RemoveHook : modules.c
+
+VARIABLE : OnQuit [Global]
+Type: EventList* OnQuit
+Visible in commands.c
+Visible in config.c
+Visible in gsserv.c
+Visible in irc.c
+Visible in modules.c
+Visible in modules.h
+Used in AddHook : modules.c
+Used in RemoveHook : modules.c
+
+VARIABLE : OnKick [Global]
+Type: EventList* OnKick
+Visible in commands.c
+Visible in config.c
+Visible in gsserv.c
+Visible in irc.c
+Visible in modules.c
+Visible in modules.h
+Used in AddHook : modules.c
+Used in RemoveHook : modules.c
+
+VARIABLE : OnSay [Global]
+Type: EventList* OnSay
+Visible in commands.c
+Visible in config.c
+Visible in gsserv.c
+Visible in irc.c
+Visible in modules.c
+Visible in modules.h
+Used in AddHook : modules.c
+Used in RemoveHook : modules.c
+Used in gotprivmsg : irc.c
+
+VARIABLE : OnMe [Global]
+Type: EventList* OnMe
+Visible in commands.c
+Visible in config.c
+Visible in gsserv.c
+Visible in irc.c
+Visible in modules.c
+Visible in modules.h
+Used in AddHook : modules.c
+Used in RemoveHook : modules.c
+
+VARIABLE : OnNotice [Global]
+Type: EventList* OnNotice
+Visible in commands.c
+Visible in config.c
+Visible in gsserv.c
+Visible in irc.c
+Visible in modules.c
+Visible in modules.h
+Used in AddHook : modules.c
+Used in RemoveHook : modules.c
+
+VARIABLE : OnCNotice [Global]
+Type: EventList* OnCNotice
+Visible in commands.c
+Visible in config.c
+Visible in gsserv.c
+Visible in irc.c
+Visible in modules.c
+Visible in modules.h
+Used in AddHook : modules.c
+Used in RemoveHook : modules.c
+
+VARIABLE : OnMode [Global]
+Type: EventList* OnMode
+Visible in commands.c
+Visible in config.c
+Visible in gsserv.c
+Visible in irc.c
+Visible in modules.c
+Visible in modules.h
+Used in AddHook : modules.c
+Used in RemoveHook : modules.c
+
+VARIABLE : OnTopic [Global]
+Type: EventList* OnTopic
+Visible in commands.c
+Visible in config.c
+Visible in gsserv.c
+Visible in irc.c
+Visible in modules.c
+Visible in modules.h
+Used in AddHook : modules.c
+Used in RemoveHook : modules.c
+
+VARIABLE : Commands [Global]
+Type: CmdList* Commands
+Visible in commands.c
+Visible in config.c
+Visible in gsserv.c
+Visible in irc.c
+Visible in modules.c
+Visible in modules.h
+Used in AddCommand : modules.c
+Used in RemoveCommand : modules.c
+Used in do_command : commands.c
+----------------------------------------
+
+----------------------------------------
+FILE : 'netdb.h'
+<<<
+  $Header: /dorks/tdo/cvsroot/gsserv-5.1/src/netdb.h,v 1.1.1.1.2.1 1998/07/12 22:47:59 tdo Exp $
+
+  NETDB.H
+
+  A host entry structure
+>>>
+Included in gsserv.c
+Included in irc.c
+
+DEFINES : 'NETDB_H' 
+<<<
+ To stop multiple inclusions. 
+>>>
+
+DEFINES : 'h_addr' 
+<<<
+ address, for backward compatiblity 
+>>>
+
+TYPE : 'struct hostent'
+<<<
+ The structe for host entries 
+>>>
+struct hostent
+  {
+   char* h_name; <<< official name of host >>>
+   char** h_aliases; <<< alias list >>>
+   int h_addrtype; <<< host address type >>>
+   int h_length; <<< length of address >>>
+   char** h_addr_list; <<< list of addresses from name server >>>
+  }
+----------------------------------------
+

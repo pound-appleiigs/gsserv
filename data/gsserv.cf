@@ -1,0 +1,44 @@
+####
+# GSServ 5.x config file
+####
+
+# default directory to search for userlist and help dir
+D/dorks/tdo/gsserv-5.1/data
+
+# The tell module
+M/dorks/tdo/gsserv-5.1/data/libtell.so
+
+# default server
+#Sirc.visi.com
+#Sirc.blackened.com
+#Sirc.home.com
+#Sirc.tc.umn.edu
+Sliii.fef.net
+
+# default port
+P6667
+
+# login name.. like it matters with identd
+Lgss
+
+# home channel
+C#appleiigs
+
+# nick
+NGSS
+
+# IRCUSER (gecos!)
+G GSServ v5.2bloat 
+
+# version message
+VGSServ 5.2bloat.  Originally by Dave Huang and Ian Schmidt, modified by Dave Roberts, Robert Hill, kevin brintnall, Mark Miller, and Chad Walker
+
+# userlist location
+Uuserlist
+
+# help dir.  this should *NOT* end in /
+Hhelp
+
+# flood control. F0 = on, F1 = off
+F1
+

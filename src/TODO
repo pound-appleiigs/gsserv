@@ -1,0 +1,19 @@
+*  gsserv 5.1crumb  *
+
+//
+// started but unfinished commands
+//
+LIST		level 25	priority
+
+//
+// unfinished commands
+//
+TOGLOG		level 100
+STATS		level 100
+DO		level 100
+NASTYSERV	level 100
+
+//
+// notes
+//
+# vary GSServ's comments and replies for originality
